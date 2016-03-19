@@ -1617,6 +1617,7 @@ void galaxy::Evolve()
 	RefractoryTime();
 	SFR_INDEX=0; // sFR index is used to get longer then 10 Myr SFR profile
 	OTFL_INDEX=0;
+	TIMESTEP=0;
 	for(int t=0; t<prm.at("Galaxy_age_Myr_i").i; t+=prm.at("Time_step_Myr_i").i)
 	{
 		rotate();
