@@ -39,6 +39,6 @@ zip:
 arch: tar zip
 
 move: | galemo
-	ln -s  $(CURDIR)/$(EXE) $(RUN_DIR)$(EXE)
+	ln -sf  $(CURDIR)/$(EXE) $(RUN_DIR)$(EXE)
 
 
