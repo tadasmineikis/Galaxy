@@ -336,8 +336,74 @@ void galaxy::Read_params(string fname)
             getline(fin, in_str);
         else if(in_str.find_first_of("#") == in_str.npos )
 		{
-			//cerr<<in_str<<endl;
-			if(in_str==string("SSP"))
+			// ----------------------------------------
+			// SFR 'directly' controlling parameters
+			if(in_str==string("SFE_POW"))
+            {
+				string check_input;
+				fin >> check_input;
+				if( isdigit(check_input[0]) )
+				{
+					cerr << "SFE_POW set to constant value" << endl;
+					prm["SFE_POW_f"].f = atof(check_input.c_str());
+					prm["SFE_POW_f"].initialized=true;
+				}
+				else
+				{
+					cerr << "SFE_POW set as time variable" << endl;
+					fstream input_file;
+					input_file.open(check_input.c_str(),ios::in);
+					strip_header(input_file);
+					prm["SFE_POW_f"].fv.load(input_file,raw_ascii);
+					cerr<< "SFE_POW entries:" << prm["SFE_POW_f"].fv.n_rows << endl;
+					input_file.close();
+				}
+			}
+			else if(in_str==string("SFE"))
+            {
+				string check_input;
+				fin >> check_input;
+				if( isdigit(check_input[0]) )
+				{
+					cerr << "SFE set to constant value" << endl;
+					prm["SFE_f"].f = atof(check_input.c_str());
+					prm["SFE_f"].initialized=true;
+				}
+				else
+				{
+					cerr << "SFE set as time variable" << endl;
+					fstream input_file;
+					input_file.open(check_input.c_str(),ios::in);
+					strip_header(input_file);
+					prm["SFE_f"].fv.load(input_file,raw_ascii);
+					cerr<< "SFE entries:" << prm["SFE_f"].fv.n_rows << endl;
+					input_file.close();
+				}
+			}
+			else if(in_str==string("TRIGGERED"))
+			{
+				string check_input;
+				fin >> check_input;
+				if( isdigit(check_input[0]) )
+				{
+					cerr << "TRIGGERED_PROBABILITY set to constant value" << endl;
+					prm["TRIG_PROB_f"].f = atof(check_input.c_str());
+					prm["TRIG_PROB_f"].initialized=true; 
+				}
+				else
+				{
+					cerr << "TRIGGERED_PROBABILITY set as time variable" << endl;
+					fstream input_file;
+					input_file.open(check_input.c_str(),ios::in);
+					strip_header(input_file);
+					prm["TRIG_PROB_f"].fv.load(input_file,raw_ascii);
+					cerr<< "TRIGG entries:" << prm["TRIG_PROB_f"].fv.n_rows << endl;
+					input_file.close();
+				}
+				fin >> prm["TRIG_TIME_i"].i;
+			}
+			//-----------------------------------------
+			else if(in_str==string("SSP"))
 			{
 				string fage, fz;
 				fin >> fage >> fz;
@@ -347,49 +413,40 @@ void galaxy::Read_params(string fname)
 			   	prm["SSP_matrix_age_i"].i = prm.at("SSP_ages_usv").usv.n_rows;
 			   	prm["SSP_matrix_z_i"].i = prm.at("SSP_metalls_fv").fv.n_rows;
             }
-            if(in_str==string("ACC_METALLICITY"))
+            else if(in_str==string("ACC_METALLICITY"))
             {
 				fin >> ACCRETION_METTALICITY;
 			}
-            if(in_str==string("SFE"))
-            {
-				fin >> prm["SFE_f"].f;
-			}
-			if(in_str==string("NRM_SFE"))
+			else if(in_str==string("NRM_SFE"))
             {
 				fin >> prm["NRM_SFE_f"].f;
 				prm.at("NRM_SFE_f").f=prm.at("NRM_SFE_f").f*prm.at("CELL_AREA_f").f;
 			}
-
-			if(in_str==string("MINIMUM_SFE"))
+			else if(in_str==string("MINIMUM_SFE"))
             {
 				fin >> prm["MINIMUM_SFE_f"].f;
 			}
-			if(in_str=="MAXIMUM_SFE")
+			else if(in_str=="MAXIMUM_SFE")
 			{
 				fin >> prm["MAXIMUM_SFE_f"].f;
 			}
-			if(in_str==string("SFE_POW"))
-            {
-				fin >> prm["SFE_POW_f"].f;
-			}
-			if(in_str==string("TRIGG_MASS"))
+			else if(in_str==string("TRIGG_MASS"))
             {
 				fin >> prm["MINIMUM_MASS_f"].f >> prm["TRIGG_MASS_f"].f ;
 			}
-			if(in_str==string("GALAXY_AGE"))
+			else if(in_str==string("GALAXY_AGE"))
 			{
 				fin >> prm["Galaxy_age_Myr_i"].i;
 			}
-			if(in_str==string("TIMESTEP"))
+			else if(in_str==string("TIMESTEP"))
 			{
 				fin >> prm["Time_step_Myr_i"].i;
 			}
-			if(in_str==string("SEED"))
+			else if(in_str==string("SEED"))
 			{
 				fin >> prm["RND_SEED_i"].i;
 			}
-			if(in_str==string("OUTPUT"))
+			else if(in_str==string("OUTPUT"))
 			{
 				fin >> prm["OUTPUT_TYPES_n"].n;
 				//set initial values to false
@@ -419,13 +476,13 @@ void galaxy::Read_params(string fname)
 				t.clear();
 			}
 			// Used for ouput detailed information of selected ring
-			if(in_str==string("RING"))
+			else if(in_str==string("RING"))
 			{
 				fin >> prm["RING_i"].i;
 				cerr<<"RING for output:" << prm["RING_i"].i << endl;
 			}
 
-			if(in_str==string("GAS_DIFFUSION"))
+			else if(in_str==string("GAS_DIFFUSION"))
 			{
 				fin >> prm["Diffusion_const_f"].f;
 				if (prm.at("Diffusion_const_f").f != 0)
@@ -433,31 +490,31 @@ void galaxy::Read_params(string fname)
 					prm.at("Diffusion_const_f").f = 1./(prm.at("Diffusion_const_f").f/prm.at("Time_step_Myr_i").i);
 				}
 			}
-			if(in_str==string("ROTATION"))
+			else if(in_str==string("ROTATION"))
 			{
 				fin >> prm["Rotation_curve_s"].str;
 			}
-			if(in_str==string("GRID_SIZE"))
+			else if(in_str==string("GRID_SIZE"))
 			{
 				fin >> prm["Rings_i"].i >> prm["Rings_BUFF_i"].i;
 			}
-			if(in_str==string("SN_TIMESCALE"))
+			else if(in_str==string("SN_TIMESCALE"))
 			{
 				fin >> prm["SN_Timescale_10Myr_i"].i;
 				prm["SN_Timescale_10Myr_i"].i /= prm.at("Time_step_Myr_i").i;
 			}
-			if(in_str==string("CELL_SIZE"))
+			else if(in_str==string("CELL_SIZE"))
 			{
 				fin >>prm["Cell_size_pc_f"].f;
 				prm["CELL_AREA_f"].f=pow(prm.at("Cell_size_pc_f").f,2)*datum::pi/3;
 			}
-			if(in_str==string("PEGASE"))
+			else if(in_str==string("PEGASE"))
 			{
 				fin >>prm["MGAS_PEGASE_s"].str >> prm["ZGAS_PEGASE_s"].str;
 				MGAS_PEGASE.load(prm.at("MGAS_PEGASE_s").str, raw_ascii);
 				ZGAS_PEGASE.load(prm.at("ZGAS_PEGASE_s").str, raw_ascii);
 			}
-			if(in_str==string("PHOTOMETRY"))
+			else if(in_str==string("PHOTOMETRY"))
 			{
 				prm["PHOTOMETRY_sc"].initialized=true;
 				unsigned short idx;
@@ -474,36 +531,36 @@ void galaxy::Read_params(string fname)
 			}
 			//==========================================================
 			// SPONTANEOUS SF PARAMETERS
-			if(in_str==string("SPONTANEOUS"))
+			else if(in_str==string("SPONTANEOUS"))
 			{
 				cerr<<"SPONTANEOUS"<<endl;
 				SPONT_TYPE=0;
 				fin >>prm["SPONT_MODE_i"].i >>  prm["SPONT_NRM_f"].f ;
 			}
-			if(in_str==string("NOT_FIXED_SPONT"))
+			else if(in_str==string("NOT_FIXED_SPONT"))
 			{
 				cerr<<"NOT_FIXED_SPONTANEOUS"<<endl;
 				SPONT_TYPE=1;
 				fin >> prm["NFSPONT_GAS_MODE_f"].f >> prm["NFSPONT_GAS_NRM_f"].f ;
 			}
-			if(in_str==string("FLAT_SPONT"))
+			else if(in_str==string("FLAT_SPONT"))
 			{
 				cerr<<"FLAT_SPONT" << endl;
 				SPONT_TYPE=2;
 				fin >> prm["SPONT_NRM_f"].f ;
 			}
-			if(in_str==string("RAD_SPONT"))
+			else if(in_str==string("RAD_SPONT"))
 			{
 				cerr<<"RAD_SPONT" << endl;
 				SPONT_TYPE=4;
 				fin >> prm["SPONT_NRM_f"].f ;
 			}
-			if(in_str==string("GAS2_SPONT"))
+			else if(in_str==string("GAS2_SPONT"))
 			{
 				SPONT_TYPE=5;
 				fin >> prm["GAS2_SPONT_NRM_f"].f ;
 			}
-			if(in_str==string("MANUAL_SPONT"))
+			else if(in_str==string("MANUAL_SPONT"))
 			{
 				cerr<<"MANUAL_SPONT" << endl;
 				SPONT_TYPE=3;
@@ -525,31 +582,25 @@ void galaxy::Read_params(string fname)
 				MSPONT.load(f_MSPONT,raw_ascii);
 				f_MSPONT.close();
 			}
-			if(in_str==string("COUNT_ACTIVE"))
+			else if(in_str==string("COUNT_ACTIVE"))
 			{
 				SPONT_TYPE=5;
 				prm["COUNT_ACTIVE"].initialized=true ;
 			}
 			//==========================================================
-			if(in_str==string("TRIGGERED"))
-			{
-				fin >>prm["TRIG_PROB_f"].f >> prm["TRIG_TIME_i"].i;
-				//fin >>prm["TRIG_PROB_f"].f;// >> prm["PTRIG_A_f"].f >> prm["PTRIG_B_f"].f >> prm["PTRIG_PHI_f"].f>> prm["TRIG_TIME_i"].i;
-				//prm["TRIG_TIME_i"].i = 1;
-			}
-			if(in_str==string("GAS_SFR_TRESHOLD"))
+			else if(in_str==string("GAS_SFR_TRESHOLD"))
 			{
 				fin >>prm["GAS_SFR_TRESHOLD_f"].f;
 			}
-			if(in_str==string("SHARP_SFTRESHOLD"))
+			else if(in_str==string("SHARP_SFTRESHOLD"))
 			{
 				prm["SHARP_SFTRESHOLD"].initialized=true;
 			}
-			if(in_str==string("STELLAR_DIFFUSION"))
+			else if(in_str==string("STELLAR_DIFFUSION"))
 			{
 				fin >>prm["STELLAR_DIFUSSION_f"].f >> prm["Minimum_Diff_Mass_f"].f;
 			}
-			if(in_str==string("INIT_SFR"))
+			else if(in_str==string("INIT_SFR"))
 			{
 				prm["INIT_SFR_b"].initialized=true;
 				
@@ -562,29 +613,29 @@ void galaxy::Read_params(string fname)
 					prm.at("INIT_SFR_b").idict[i_ring]=i_cell;
 				}
 			}
-			if(in_str==string("NUM_OF_THREADS"))
+			else if(in_str==string("NUM_OF_THREADS"))
 			{
 				fin>>prm["NUM_OF_THREADS_i"].i;
 				omp_set_num_threads(prm.at("NUM_OF_THREADS_i").i);
 			}
-			if(in_str==string("CMD_LIMIT"))
+			else if(in_str==string("CMD_LIMIT"))
 			{
 				//first one -- mass limit, second -- age
 				fin>>prm["CMD_MASS_LIMIT_f"].f >> prm["CMD_AGE_LIMIT_f"].f;
 				prm.at("CMD_MASS_LIMIT_f").initialized=true;
 				prm.at("CMD_AGE_LIMIT_f").initialized=true;
 			}
-			if(in_str==string("ACCRETION"))
+			else if(in_str==string("ACCRETION"))
 			{
 				prm["ACCRETION_b"].initialized=true;
 				fin>>prm["ACCRETION_RAD_PROFILE_s"].str >> prm["ACCRETION_TIME_PROFILE_s"].str;
 			}
-			if(in_str==string("DISTANCE"))
+			else if(in_str==string("DISTANCE"))
 			{
 				fin >> prm["DISTANCE_MPC_f"].f;
 				PC2_TO_ARCSEC2 = pow(atan(1./(prm["DISTANCE_MPC_f"].f*1e6))*180./datum::pi*3600, 2);//0.060296 --> 840 KPC;
 			}
-			if(in_str==string("OUTFLOW"))
+			else if(in_str==string("OUTFLOW"))
 			{
 				fin >>prm["OUTFLOW_FRAC_f"].f >> prm["OUTFLOW_VEL_RATIO_f"].f;
 				prm["OUTFLOW_b"].initialized=true;
@@ -1101,16 +1152,21 @@ void galaxy::IzotropicTriggeredStarFormation()
 						double RND;
 						float MStars;
 						RND=gsl_rng_uniform(random_number_gsl);
-						if( RND < prm.at("TRIG_PROB_f").f*GlxCells(GlxNeigh[i]->Rings(j,n))(GlxNeigh[i]->Cells(j,n),gc.at("SFR_TRESH")))//*GlxNeigh[i]->Areas(j,n))
-						{
-							//float MStars;
-							++SUM;
-							MStars=SF_event(GlxNeigh[i]->Rings(j,n),GlxNeigh[i]->Cells(j,n));
-							GlxRings(i,gr.at("SF_event"))+=1;
-							GLX.at("SFR")+=MStars;
-
-							//int idx=i/prm.at("PEG_RINGS_i").i;
-							//GLX[i2s[idx]]+=MStars;
+						if( prm.at("TRIG_PROB_f").initialized ) {
+							if( RND < prm.at("TRIG_PROB_f").f*GlxCells(GlxNeigh[i]->Rings(j,n))(GlxNeigh[i]->Cells(j,n),gc.at("SFR_TRESH"))) {
+								++SUM;
+								MStars=SF_event(GlxNeigh[i]->Rings(j,n),GlxNeigh[i]->Cells(j,n));
+								GlxRings(i,gr.at("SF_event"))+=1;
+								GLX.at("SFR")+=MStars;
+							}
+						}
+						else {
+							if( RND < prm.at("TRIG_PROB_f").fv[TIMESTEP]*GlxCells(GlxNeigh[i]->Rings(j,n))(GlxNeigh[i]->Cells(j,n),gc.at("SFR_TRESH"))) {
+								++SUM;
+								MStars=SF_event(GlxNeigh[i]->Rings(j,n),GlxNeigh[i]->Cells(j,n));
+								GlxRings(i,gr.at("SF_event"))+=1;
+								GLX.at("SFR")+=MStars;
+							}
 						}
 					}
 				}
@@ -1423,9 +1479,22 @@ double galaxy::SF_event(unsigned short i, unsigned short j)
 	{
 		cerr<<i<<" "<<j<<" "<<GlxCells(i)(j,gc.at("Mgas"))<< " "<< GlxCells(i)(j,gc.at("Zgas"))<<endl;
 	}
-	double SFE;//, mstr, MOL_RATIO, Pressure;
-
-	SFE = prm.at("SFE_f").f*pow(GlxCells(i)(j,gc.at("Mgas"))/NORMALIZE_SFE_MASS, prm.at("SFE_POW_f").f);
+	double SFE=-99999;//, mstr, MOL_RATIO, Pressure;
+	
+	// Check if SFR controlling variables are set as time variables or constants
+	if( prm.at("SFE_f").initialized && prm.at("SFE_POW_f").initialized) {
+		SFE = prm.at("SFE_f").f*pow(GlxCells(i)(j,gc.at("Mgas"))/NORMALIZE_SFE_MASS, prm.at("SFE_POW_f").f);
+	}
+	else if( prm.at("SFE_f").initialized && !prm.at("SFE_POW_f").initialized) {
+		SFE = prm.at("SFE_f").f*pow(GlxCells(i)(j,gc.at("Mgas"))/NORMALIZE_SFE_MASS, prm.at("SFE_POW_f").fv[TIMESTEP]);
+	}
+	else if( !prm.at("SFE_f").initialized && prm.at("SFE_POW_f").initialized) {
+		SFE = prm.at("SFE_f").fv[TIMESTEP]*pow(GlxCells(i)(j,gc.at("Mgas"))/NORMALIZE_SFE_MASS, prm.at("SFE_POW_f").f);
+	}
+	else if( !prm.at("SFE_f").initialized && !prm.at("SFE_POW_f").initialized) {
+		SFE = prm.at("SFE_f").fv[TIMESTEP]*pow(GlxCells(i)(j,gc.at("Mgas"))/NORMALIZE_SFE_MASS, prm.at("SFE_POW_f").fv[TIMESTEP]);
+	}
+	//------------------------------------
 	if (SFE < prm.at("MINIMUM_SFE_f").f)
 		SFE = prm.at("MINIMUM_SFE_f").f;
 
@@ -1619,12 +1688,9 @@ void galaxy::Evolve()
 	OTFL_INDEX=0;
 	TIMESTEP=0;
 	for(int t=0; t<prm.at("Galaxy_age_Myr_i").i; t+=prm.at("Time_step_Myr_i").i)
-	{
+	{		
 		rotate();
 		find_neighbours();
-		
-		//Debug();
-		//Debug1();
 		
 		if (SFR_INDEX >= MAX_SFR_INDEX)
 		{
