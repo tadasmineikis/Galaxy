@@ -463,17 +463,36 @@ void galaxy::Read_params(string fname)
 					fin>>tmp_string;
 					prm.at("OUTPUT_TYPES_n").dict.at(tmp_string)=true;
 				}
-				fin >> prm["Output_Times_ia"].an;
+				
+				string check_input;
+				fin >> check_input;
 				std::vector<unsigned short> t;
-				unsigned short tin;
-				for(int i=0; i<prm.at("Output_Times_ia").an; ++i)
-				{
-					fin >>tin;
-					t.push_back(tin);
+				if( isdigit(check_input[0]) ) {
+					prm["Output_Times_ia"].an=atof(check_input.c_str());
+					unsigned short tin;
+					for(int i=0; i<prm.at("Output_Times_ia").an; ++i)
+					{
+						fin >>tin;
+						cerr << tin << endl;
+						t.push_back(tin);
+					}
+					prm["Output_Times_ia"].usv = Col<unsigned short>(t);
+					prm.at("Output_Times_ia").cur=0;
+					t.clear();
 				}
-				prm["Output_Times_ia"].usv = Col<unsigned short>(t);
-				prm.at("Output_Times_ia").cur=0;
-				t.clear();
+				else{
+					unsigned short tin0, tin1, t_step;
+					fin >>tin0 >> tin1 >> t_step;
+					prm["Output_Times_ia"].an=(tin1-tin0)/t_step+1;
+					for(int i=0; i<prm.at("Output_Times_ia").an; ++i)
+					{
+						cerr << tin0+t_step*i << endl;
+						t.push_back(tin0+t_step*i);
+					}
+					prm["Output_Times_ia"].usv = Col<unsigned short>(t);
+					prm.at("Output_Times_ia").cur=0;
+					t.clear();
+				}
 			}
 			// Used for ouput detailed information of selected ring
 			else if(in_str==string("RING"))
