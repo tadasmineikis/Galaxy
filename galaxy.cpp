@@ -1815,7 +1815,7 @@ void galaxy::Output()
 	{
 		stringstream s, sdump;
 		s<<setprecision(3);
-		s<<"# r x y ref_t sfr_t sp_buff mgas zgas mstr sfe last_mstr";
+		s<<"#r x y ref_t sfr_t sp_buff mgas zgas mstr sfe last_mstr";
 		if( prm.at("OUTFLOW_b").initialized )
 		{
 			s<<" TVEL rho N0" ;
