@@ -19,7 +19,6 @@ using namespace std;
 
 galaxy::galaxy(string pfile)
 {
-	//cout <<"#time x y t p x0 y0 phi0" <<endl;
 	iname = pfile;
 	Read_params(pfile);
 	
@@ -43,24 +42,6 @@ galaxy::galaxy(string pfile)
 	//==================================================================
 	if(prm["OUTPUT_TYPES_n"].dict.at("0d"))
 	{
-		//SFR and MGAS variables for 1 kpc width RINGS
-		/*for (int i=0; i<prm.at("PEG_RINGS_i").i; i++)
-		{
-			stringstream s,m,z,l;
-			s<<"SFR"<<i;
-			m<<"MGAS"<<i;
-			z<<"ZGAS"<<i;
-			l<<"MSTR"<<i;
-			i2s[i]=s.str();
-			i2m[i]=m.str();
-			i2z[i]=z.str();
-			i2l[i]=l.str();
-			GLX[i2s[i]]=0;
-			GLX[i2m[i]]=0;
-			GLX[i2z[i]]=0;
-			GLX[i2l[i]]=0;
-			GLX_NRM[i2m[i]]=0;
-		}*/
 		GLX["SFR"]=0;
 		GLX["ACCRETION"]=0;
 		GLX["SPONTANEOUS_EVENTS"]=0;
@@ -123,7 +104,6 @@ galaxy::galaxy(string pfile)
 		GlxCells(i)=mat(NCells(i),gc.size(),fill::zeros);
 		GlxCells(i).col(gc.at("RefTime")).fill(1000);
 		GlxCells(i).col(gc.at("TrigTime")).fill(1000);
-		//GlxCells(i).col(gc.at("Zgas")).fill(0.0001+FLT_EPSILON);
 	}
 	//==================================================================
 	// GLX PHOT
@@ -210,7 +190,6 @@ galaxy::galaxy(string pfile)
 
 	if(prm["INIT_SFR_b"].initialized )
 	{
-		//Fill();
 		cerr<<"INTI_SFR"<<endl;
 		map<unsigned short,unsigned short>::iterator it;
 		for(it=prm.at("INIT_SFR_b").idict.begin(); it!=prm.at("INIT_SFR_b").idict.end(); ++it)
@@ -311,7 +290,6 @@ void galaxy::flush_all_dict(string fname)
 
 void galaxy::Read_params(string fname)
 {
-	//cerr<<"reading parameters"<<endl;
 	fstream fin;
 	fin.open(fname.c_str(),ios::in);
 	if(!fin.is_open())
@@ -319,8 +297,6 @@ void galaxy::Read_params(string fname)
 		cerr<< "Input file:"<<fname<<" failed to open"<<endl;
 		exit(EXIT_FAILURE);
 	}
-	//TODO CLEAN this thing
-	//PC2_TO_ARCSEC2=-999;
 	
 	string in_str;
 	for(;;)
@@ -550,60 +526,13 @@ void galaxy::Read_params(string fname)
 			}
 			//==========================================================
 			// SPONTANEOUS SF PARAMETERS
-			else if(in_str==string("SPONTANEOUS"))
-			{
-				cerr<<"SPONTANEOUS"<<endl;
-				SPONT_TYPE=0;
-				fin >>prm["SPONT_MODE_i"].i >>  prm["SPONT_NRM_f"].f ;
-			}
-			else if(in_str==string("NOT_FIXED_SPONT"))
-			{
-				cerr<<"NOT_FIXED_SPONTANEOUS"<<endl;
-				SPONT_TYPE=1;
-				fin >> prm["NFSPONT_GAS_MODE_f"].f >> prm["NFSPONT_GAS_NRM_f"].f ;
-			}
-			else if(in_str==string("FLAT_SPONT"))
-			{
-				cerr<<"FLAT_SPONT" << endl;
-				SPONT_TYPE=2;
-				fin >> prm["SPONT_NRM_f"].f ;
-			}
-			else if(in_str==string("RAD_SPONT"))
-			{
-				cerr<<"RAD_SPONT" << endl;
-				SPONT_TYPE=4;
-				fin >> prm["SPONT_NRM_f"].f ;
-			}
 			else if(in_str==string("GAS2_SPONT"))
 			{
-				SPONT_TYPE=5;
+				SPONT_TYPE=0;
 				fin >> prm["GAS2_SPONT_NRM_f"].f ;
-			}
-			else if(in_str==string("MANUAL_SPONT"))
-			{
-				cerr<<"MANUAL_SPONT" << endl;
-				SPONT_TYPE=3;
-				int num;
-				fin>>num >> prm["MANUAL_SPONT_OFFSET_f"].f;
-				prm["MANUAL_SPONT"].fv=fvec(num);
-				for(int i=0; i<num; i++)
-					fin>>prm["MANUAL_SPONT"].fv(i);
-				fin>>prm["MANUAL_SPONT"].str;
-				
-				fstream f_MSPONT;
-				f_MSPONT.open(prm.at("MANUAL_SPONT").str.c_str(),ios::in);
-				if(!f_MSPONT.is_open())
-				{
-					cerr<<"MANUAL_SPONT file"<< prm.at("MANUAL_SPONT").str <<" read failure. ABorting"<<endl;
-					exit(EXIT_FAILURE);
-				}
-	
-				MSPONT.load(f_MSPONT,raw_ascii);
-				f_MSPONT.close();
 			}
 			else if(in_str==string("COUNT_ACTIVE"))
 			{
-				SPONT_TYPE=5;
 				prm["COUNT_ACTIVE"].initialized=true ;
 			}
 			//==========================================================
@@ -666,15 +595,29 @@ void galaxy::Read_params(string fname)
 	fin.close();
 }
 
-void galaxy::rotate()
-{
-	GlxRings.col(gr.at("AziCor"))=GlxRings.col(gr.at("AziCor"))+GlxRings.col(gr.at("RotRad"));
-}
 
+/*
+ *  The function calculates gas and metals added to the cell by evolving SSPs within the cell.
+ *  According to the outflow parameter calculated in SF_event() funtion, fraction of metals
+ *  and gas are discarded here.
+ * 
+ *  The function operates on internal class variables:
+ *  GlxCells
+ *  GlxRings
+ * 
+ * 	Updates output variables:
+ *  ROTFL_GAS(i,OTFL_INDEX)
+ *  ROTFL_METALS(i,OTFL_INDEX)
+ * 
+ *  Updates consistency check variables:
+ * 	GLOB_OUTFLOW_MGAS
+ * 	TOTAL_METALS
+ * 	GLOB_STELLAR_ACC
+ *  
+ */
 void galaxy::EvolveMetals()
 {
 	float LEFT_AFTER_OUTFLOW=1.-prm.at("OUTFLOW_FRAC_f").f;
-	//static long double SUM =0;
 	double SUM=0;
 	double METALS=0;
 	double STELLAR_ACC=0;
@@ -684,30 +627,11 @@ void galaxy::EvolveMetals()
 		float eMgas=0, eZgas=0, delta_Mgas=0, delta_Zgas=0;
 		for(unsigned short j=0; j<NCells(i); ++j)
 		{
-			//float ZGAS_BEFORE, MGAS_BEFORE, METALS_BEFORE;
 			// returned gas from evolved SPPs
 			eMgas = accu(MGAS_PEGASE % GlxStars(i).slice(j));
 			eZgas = accu(ZGAS_PEGASE % GlxStars(i).slice(j));
 			
-			//for debuging
-			//ZGAS_BEFORE=GlxCells(i)(j, gc.at("Zgas"));
-			//MGAS_BEFORE=GlxCells(i)(j, gc.at("Mgas"));
-			//METALS_BEFORE=GlxCells(i)(j, gc.at("Metals"));
-			
-			//--------------------------------------------------------------
-			//DEBUGING
-			
-			/*if(eZgas/eMgas<0.00009 && GlxCells(i)(j,gc["last_Mstr"]) >0 )
-			{
-				cerr<<"Negative from SSP side! "<< eZgas/eMgas<<endl;
-			}
-			
-			if(GlxCells(i)(j, gc.at("Zgas"))<0.0001 && GlxCells(i)(j,gc["last_Mstr"]) >0.01) 
-			{
-				cerr<<"NEGATIVE BEFORE :"<< GlxCells(i)(j, gc.at("Zgas")) <<endl;
-			}*/
-			//--------------------------------------------------------------
-			
+			//  case of star formation event later then SN timescale
 			if(GlxCells(i)(j,gc.at("RefTime")) > prm.at("SN_Timescale_10Myr_i").i)
 			{
 				GlxCells(i)(j, gc.at("Metals"))+=eZgas;
@@ -716,6 +640,7 @@ void galaxy::EvolveMetals()
 				METALS+=eZgas;
 				STELLAR_ACC+=eMgas;
 			}
+			//  case of star formation event earlier then SN timescale
 			else if(GlxCells(i)(j,gc.at("RefTime")) >= 0 && GlxCells(i)(j,gc.at("RefTime")) <= prm.at("SN_Timescale_10Myr_i").i)
 			{
 				if ( GlxCells(i)(j,gc.at("TVEL")) > 1 && prm["OUTFLOW_b"].initialized)
@@ -746,15 +671,14 @@ void galaxy::EvolveMetals()
 					STELLAR_ACC+=eMgas;
 				}
 			}
+			// Consistency check
 			if(GlxCells(i)(j, gc.at("Metals"))/GlxCells(i)(j, gc.at("Mgas"))<0.0001)
 			{
 				cerr<<"WHAT? i: "<<i << " j: " << j << " eZgas: "<<eZgas;
 				cerr<<" eMgas: "<< eMgas << " Mgas: "<<GlxCells(i)(j, gc.at("Mgas")) << endl;
 				cerr<<" delta_mgas: "<< delta_Mgas << " delta_Zgas: "<<delta_Zgas << endl;
 				cerr<<" Zgas: "<<GlxCells(i)(j, gc.at("Zgas")) << endl;
-//				cerr<<" Zgas before: " << ZGAS_BEFORE << " Mgas before: " << MGAS_BEFORE << endl;
 				cerr << " outflow: "<<  GlxCells(i)(j,gc.at("TVEL")) << " ref time: " << GlxCells(i)(j,gc.at("RefTime")) <<endl;
-//				cerr<<" metals before: " << METALS_BEFORE << " metals after: " <<  GlxCells(i)(j, gc.at("Metals"))  << endl;
 			}
 		}
 	}
@@ -763,26 +687,45 @@ void galaxy::EvolveMetals()
 	GLOB_STELLAR_ACC=STELLAR_ACC;
 }
 
+/*
+ *  The function shifts matrix of stellar mases in age direction.
+ *  This is executed for every cell in the model
+ * 
+ *  The function operates on internal class variables:
+ *  GlxStars
+ * 
+ *  The function uses temporary variable AgeFlow
+ * 
+ * 	Updates output variables:
+ *  GlxStars
+ */
 void galaxy::EvolveAge()
 {
 	#pragma omp parallel for schedule(guided)
 	for(int i=0; i<prm.at("Rings_i").i; ++i)
 	{
+		//allocate matrix which will be used for shifts
 		fmat AgeFlow = fmat(prm.at("SSP_matrix_age_i").i,prm.at("SSP_matrix_z_i").i,fill::zeros);
 		for(unsigned short j=0; j<NCells(i); ++j)
 		{
-			// evolve SSP
 			AgeFlow(span(1,prm.at("SSP_matrix_age_i").i-1),span::all) = GlxStars(i).slice(j)(span(0,prm.at("SSP_matrix_age_i").i-2),span::all);
 			GlxStars(i).slice(j)=AgeFlow;
-			//GlxStars(i).slice(j)(0,span::all).fill(0);
-			//GlxStars(i).slice(j)(span(0,prm.at("SSP_matrix_age_i").i-2),span::all)-=AgeFlow;
 		}
 	}
 }
 
+/*
+ *  The function moves gas mass between cells
+ * 
+ *  The function operates on internal class variables:
+ *  GlxCells
+ * 
+ * 	Updates consistency check variables:
+ *  METALS_REMAIN
+ *  MGAS_REMAIN
+ */
 void galaxy::gas_diffusion()
 {
-
 	#pragma omp parallel for
 	for(int i=0; i<prm.at("Rings_i").i; ++i)
 	{
@@ -791,6 +734,7 @@ void galaxy::gas_diffusion()
 		GlxCells(i).col(gc.at("DiffN")).zeros();
 	}
 	
+	//to avoid concurent writing into memory location, gas echange is splitted
 	violent_gas_exchange(0, 3);
 	violent_gas_exchange(1, 3);
 	violent_gas_exchange(2, 3);
@@ -798,7 +742,9 @@ void galaxy::gas_diffusion()
 	calm_gas_exchange(0, 2);
 	calm_gas_exchange(1, 2);
 	
-	//safety check
+	// safety checks in principle can be disabled
+	
+	//safety check 1
 	#pragma omp parallel for schedule(guided)
 	for(int i=0; i<prm.at("Rings_i").i; i++)
 		for(int j=0; j<NCells(i); ++j)
@@ -836,7 +782,7 @@ void galaxy::gas_diffusion()
 				}
 			}
 		}
-	//safety check
+	//safety check 2
 	#pragma omp parallel for schedule(guided)
 	for(int i=0; i<prm.at("Rings_i").i; ++i)
 		for(int j=0; j<NCells(i); ++j)
@@ -859,25 +805,38 @@ void galaxy::gas_diffusion()
 			}
 		}
 			
-	//#pragma omp for schedule(guided)
+	// results of gas exchange are writen into arrays
 	double METALS_REMAIN=0, MGAS_REMAIN=0;
 	#pragma omp parallel for schedule(guided) reduction(+:METALS_REMAIN,MGAS_REMAIN)
 	for(int i=0; i<prm.at("Rings_i").i; ++i)
 	{
-		//GlxCells(i).col(gc.at("Zgas")) = ( GlxCells(i).col(gc.at("Mgas"))%GlxCells(i).col(gc.at("Zgas"))+GlxCells(i).col(gc.at("Diff_zgas_rez")) )/
-		//	(GlxCells(i).col(gc.at("Mgas"))+GlxCells(i).col(gc.at("Diff_gas_rez")));
 		GlxCells(i).col(gc.at("Metals"))+=GlxCells(i).col(gc.at("Diff_zgas_rez"));
 		GlxCells(i).col(gc.at("Mgas"))+= GlxCells(i).col(gc.at("Diff_gas_rez"));
 		GlxCells(i).col(gc.at("Zgas"))=GlxCells(i).col(gc.at("Metals"))/GlxCells(i).col(gc.at("Mgas"));
 		METALS_REMAIN+=sum(GlxCells(i).col(gc.at("Diff_zgas_rez")));
 		MGAS_REMAIN+=sum(GlxCells(i).col(gc.at("Diff_gas_rez")));
 	}
+	// consistency check 3
 	if(fabs(METALS_REMAIN)>1e-8 || fabs(MGAS_REMAIN) >1e-8)
 	{
 		cerr<<"TIMESTEP: "<<TIMESTEP<<" METALS: "<<METALS_REMAIN<<" MGAS :"<<MGAS_REMAIN<<endl;
 	}
 }
 
+/*
+ *  The function is subfunction of gas_diffusion()
+ *  Takes 2 parameters:
+ *  int start_idx -  index of the ring on which to execute
+ *  int incr_idx  -  step in index, i.e. value 3 would mean
+ *  to run function on every third ring - 0, 3, 6, 9
+ * 
+ *  The function operates on internal class variables (GlxCells),
+ *  but writes only in temporary storage variables -- gc.at("Diff_gas_rez"), gc.at("Diff_zgas_rez").
+ *  Actual writing occurs in the function gas_diffusion. 
+ * 
+ * 	Updates consistency check variables:
+ *  GlxCells(i)(j,gc.at("DiffN"))
+ */
 void galaxy::violent_gas_exchange(int start_idx, int incr_idx)
 {
 	#pragma omp parallel for schedule(guided)
@@ -934,6 +893,20 @@ void galaxy::violent_gas_exchange(int start_idx, int incr_idx)
 	}
 }
 
+/*
+ *  The function is subfunction of gas_diffusion()
+ *  Takes 2 parameters:
+ *  int start_idx -  index of the ring on which to execute
+ *  int incr_idx  -  step in index, i.e. value 3 would mean
+ *  to run function on every third ring - 0, 3, 6, 9
+ * 
+ *  The function operates on internal class variables (GlxCells),
+ *  but writes only in temporary storage variables -- gc.at("Diff_gas_rez"), gc.at("Diff_zgas_rez").
+ *  Actual writing occurs in the function gas_diffusion. 
+ * 
+ * 	Updates consistency check variables:
+ *  GlxCells(i)(j,gc.at("DiffN"))
+ */
 void galaxy::calm_gas_exchange(int start_idx, int incr_idx)
 {
 	#pragma omp parallel for schedule(guided)
@@ -981,6 +954,15 @@ void galaxy::calm_gas_exchange(int start_idx, int incr_idx)
 	}
 }
 
+/*
+ *  The funtion for the calculation of stellar diffusion
+ * 
+ *  At first results are stored in the temporary array GlxStarsBuff,
+ *  and then written into GlxStars.
+ * 
+ *  The parameter  prm.at("Minimum_Diff_Mass_f").f controls the treshold mass for the
+ *  diffusion to proceed.
+ */
 void galaxy::stars_diffusion()
 {
 	int max_age=prm.at("SSP_matrix_age_i").i-1;
@@ -997,18 +979,14 @@ void galaxy::stars_diffusion()
 		{
 			for(int n=0; n<GlxNeigh[i]->oN(j); ++n)
 			{
-				//fmat res = GlxNeigh[i]->oA(j,n)*(GlxStars(i).slice(j) - GlxStars(GlxNeigh[i]->oR(j,n)).slice(GlxNeigh[i]->oC(j,n)));
 				fmat res = GlxNeigh[i]->oA(j,n)*(GlxStars(i).slice(j)(span(8,max_age),span::all)
 				 - GlxStars(GlxNeigh[i]->oR(j,n)).slice(GlxNeigh[i]->oC(j,n))(span(8,max_age),span::all));
 				
-				//fmat res = GlxNeigh[i]->oA(j,n)*(GlxStars(i)(span(8,prm.at("SSP_matrix_age_i").i-1),span::all,span(j)) -
-				//           GlxStars(GlxNeigh[i]->oR(j,n))(span(8,prm.at("SSP_matrix_age_i").i-1),span::all,span(GlxNeigh[i]->oC(j,n))));
 				if (accu( abs(res) ) > prm.at("Minimum_Diff_Mass_f").f)
 				{
 					GlxStarsBuff(i).slice(j)(span(8,max_age),span::all)= GlxStarsBuff(i).slice(j)(span(8,max_age),span::all)-res;
 					GlxStarsBuff(GlxNeigh[i]->oR(j,n)).slice(GlxNeigh[i]->oC(j,n))(span(8,max_age),span::all)=
 					GlxStarsBuff(GlxNeigh[i]->oR(j,n)).slice(GlxNeigh[i]->oC(j,n))(span(8,max_age),span::all)+res;
-						//GlxStars(GlxNeigh[i]->oR(j,n))(span(8,prm.at("SSP_matrix_age_i").i),span(),span(GlxNeigh[i]->oC(j,n))) + res;
 				}
 			}
 		}
@@ -1021,23 +999,19 @@ void galaxy::stars_diffusion()
 		{
 			for(int n=0; n<GlxNeigh[i]->oN(j); ++n)
 			{
-				//fmat res = GlxNeigh[i]->oA(j,n)*(GlxStars(i).slice(j) - GlxStars(GlxNeigh[i]->oR(j,n)).slice(GlxNeigh[i]->oC(j,n)));
 				fmat res = GlxNeigh[i]->oA(j,n)*(GlxStars(i).slice(j)(span(8,max_age),span::all)
 				 - GlxStars(GlxNeigh[i]->oR(j,n)).slice(GlxNeigh[i]->oC(j,n))(span(8,max_age),span::all));
 				
-				//fmat res = GlxNeigh[i]->oA(j,n)*(GlxStars(i)(span(8,prm.at("SSP_matrix_age_i").i-1),span::all,span(j)) -
-				//           GlxStars(GlxNeigh[i]->oR(j,n))(span(8,prm.at("SSP_matrix_age_i").i-1),span::all,span(GlxNeigh[i]->oC(j,n))));
 				if (accu( abs(res) ) > prm.at("Minimum_Diff_Mass_f").f)
 				{
 					GlxStarsBuff(i).slice(j)(span(8,max_age),span::all)= GlxStarsBuff(i).slice(j)(span(8,max_age),span::all)-res;
 					GlxStarsBuff(GlxNeigh[i]->oR(j,n)).slice(GlxNeigh[i]->oC(j,n))(span(8,max_age),span::all)=
 					GlxStarsBuff(GlxNeigh[i]->oR(j,n)).slice(GlxNeigh[i]->oC(j,n))(span(8,max_age),span::all)+res;
-						//GlxStars(GlxNeigh[i]->oR(j,n))(span(8,prm.at("SSP_matrix_age_i").i),span(),span(GlxNeigh[i]->oC(j,n))) + res;
 				}
 			}
 		}
 	}
-	
+	// write results
 	#pragma omp parallel for schedule(guided)
 	for(int i=0; i<prm.at("Rings_i").i-prm.at("Rings_BUFF_i").i; ++i)
 	{
@@ -1045,6 +1019,13 @@ void galaxy::stars_diffusion()
 	}
 }
 
+/*
+ *  The funtion for reading rotation curve data from file.
+ *  
+ *  First lines starting with # are skipped (can be more than one)
+ *  First columns is skipped, assumed that user set rotation curve for every ring of the galaxy correctly
+ *  Second columns is expected to be in km/s units
+ */
 void galaxy::read_rotation_curve()
 {
 	fstream rotation_curve;
@@ -1058,17 +1039,19 @@ void galaxy::read_rotation_curve()
 
 	fmat raw_rotation_curve;
 	raw_rotation_curve.load(rotation_curve, raw_ascii);
-	//GlxRings.col(gr.at("RotRad")) = interp1d(raw_rotation_curve.col(0),raw_rotation_curve.col(1),GlxRings.col(gr.at("RadPc")));
-	//TODO: FIX THIS ISSUE
 	GlxRings.col(gr.at("RotRad")) = raw_rotation_curve.col(1);
+	
 	//convert km/s to rad/time step
 	GlxRings.col(gr.at("RotRad")) = 2*datum::pi * KMS_PER_MYR_TO_PC_PER_MYR * prm.at("Time_step_Myr_i").i * GlxRings.col(gr.at("RotRad"))/(2*datum::pi*GlxRings.col(gr.at("RadPc")));
 	GlxRings(0,gr.at("RotRad")) = GlxRings(1,gr.at("RotRad"));
-	//GlxRings.save("dump.dat",raw_ascii);
 	rotation_curve.close();
 	raw_rotation_curve.clear();
 }
 
+/*
+ *  The funtion updates cells neighbors information (called after each rotation)
+ *  
+ */
 void galaxy::find_neighbours()
 {
 	#pragma omp parallel for schedule(guided)
@@ -1087,77 +1070,18 @@ void galaxy::find_neighbours()
 				(GlxRings(ring_id + 1, gr.at("AziCor")) - GlxNeigh[ring_id+1]->HCellW),
 				2*datum::pi)/GlxNeigh[ring_id+1]->CellW + NCells(ring_id+1) + NCells(ring_id+1);
 		}
-		//cerr<<ring_id << " " <<upper_diff << " " << lower_diff << endl;
 		GlxNeigh[ring_id]->find_neighbours(lower_diff, upper_diff);
 	}
 }
 
-/*void galaxy::AnizotropicTriggeredStarFormation()
-{
-	//#pragma omp parallel for schedule(guided)
-	unsigned int SUM=0;
-	#pragma omp parallel for schedule(guided) reduction(+:SUM)
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		double RND;
-		//float MStars;
-		for(int j=0; j<NCells(i); ++j)
-		{
-			if(GlxCells(i)(j,gc.at("RefTime"))< 0.5 && GlxCells(i)(j,gc.at("RefTime")) > -prm.at("TRIG_TIME_i").i + 0.5 )
-			{
-				float x0=GlxRings(i,gr.at("RadPc"))*cos( GlxRings(i,gr.at("AziCor")) + j*GlxRings(i,gr.at("CellW")));
-				float y0=GlxRings(i,gr.at("RadPc"))*sin( GlxRings(i,gr.at("AziCor")) + j*GlxRings(i,gr.at("CellW")));
-				float nrm = sqrt( prm.at("PTRIG_A_f").f*prm.at("PTRIG_B_f").f );
-
-				for(int n=0; n<GlxNeigh[i]->Num(j); ++n)
-				{
-
-					if(GlxCells(GlxNeigh[i]->Rings(j,n))(GlxNeigh[i]->Cells(j,n),gc.at("SFR_TRESH")) > 0 )
-					{
-						float x=GlxRings(GlxNeigh[i]->Rings(j,n),gr.at("RadPc"))*
-						cos( GlxRings(GlxNeigh[i]->Rings(j,n),gr.at("AziCor"))
-						+ GlxNeigh[i]->Cells(j,n)*GlxRings(GlxNeigh[i]->Rings(j,n),gr.at("CellW")));
-
-						float y=GlxRings(GlxNeigh[i]->Rings(j,n),gr.at("RadPc"))*
-						sin( GlxRings(GlxNeigh[i]->Rings(j,n),gr.at("AziCor"))
-						+ GlxNeigh[i]->Cells(j,n)*GlxRings(GlxNeigh[i]->Rings(j,n),gr.at("CellW")));
-
-						float t = atan2(y-y0,x-x0) - (GlxRings(i,gr.at("AziCor")) + j*GlxRings(i,gr.at("CellW")));
-						float PRAD = prm.at("PTRIG_A_f").f*prm.at("PTRIG_B_f").f/
-						sqrt(
-						pow(prm.at("PTRIG_B_f").f*cos(t-prm.at("PTRIG_PHI_f").f*DEG_to_RAD),2)+
-						pow(prm.at("PTRIG_A_f").f*sin(t-prm.at("PTRIG_PHI_f").f*DEG_to_RAD),2)
-						);
-
-						#pragma omp critical
-						{
-							RND=gsl_rng_uniform(random_number_gsl);
-							//cout << TIMESTEP << " " << x << " " << y << " "<<t <<" " << PRAD/nrm << " "<< x0 <<" "<<y0 << " "<< GlxRings(i,gr.at("AziCor")) + j*GlxRings(i,gr.at("CellW")) <<endl;
-						}
-
-						if( RND < PRAD/nrm*prm.at("TRIG_PROB_f").f*GlxCells(GlxNeigh[i]->Rings(j,n))(GlxNeigh[i]->Cells(j,n),gc.at("SFR_TRESH")))//GlxNeigh[i]->Areas(j,n))
-						{
-							++SUM;
-							MStars=SF_event(GlxNeigh[i]->Rings(j,n),GlxNeigh[i]->Cells(j,n));
-							GlxRings(i,gr.at("SF_event"))+=1;
-
-							//int idx=i/prm.at("PEG_RINGS_i").i;
-							//#pragma omp atomic
-							//GLX[i2s[idx]]+=MStars;
-						}
-					}
-				}
-			}
-		}
-	}
-	GLX.at("TRIGGERED_EVENTS")=SUM;
-}*/
+/*
+ *  The funtion creates triggered star formation events
+ *  
+ */
 
 void galaxy::IzotropicTriggeredStarFormation()
 {
-	//#pragma omp parallel for schedule(guided)
 	unsigned int SUM=0;
-	//#pragma omp parallel for schedule(guided) reduction(+:SUM)
 	for(int i=0; i<prm.at("Rings_i").i; ++i)
 	{
 		for(int j=0; j<NCells(i); ++j)
@@ -1195,7 +1119,11 @@ void galaxy::IzotropicTriggeredStarFormation()
 	GLX.at("TRIGGERED_EVENTS")=SUM;
 }
 
-
+/*
+ *  The funtion for the creation of spontaneous star formation events
+ *  
+ */
+ 
 void galaxy::SpontaneousGas2StarFormation()
 {
 	double SUM=0;
@@ -1205,11 +1133,9 @@ void galaxy::SpontaneousGas2StarFormation()
 		GlxCells(i).col(gc.at("SPONT_BUFFER"))=GlxCells(i).col(gc.at("Mgas"))%GlxCells(i).col(gc.at("Mgas"));
 		SUM+=sum( GlxCells(i).col( gc.at("SPONT_BUFFER") ) );
 	}
-	//cerr<< median( GlxCells(20).col(gc.at("SPONT_BUFFER")) ) <<" "<<SUM<<endl;
 	SUM=prm.at("GAS2_SPONT_NRM_f").f/SUM;
 
 	unsigned int SUM0=0;
-    //#pragma omp parallel for schedule(guided) reduction(+:SUM0)
 	for(int i=0; i<prm.at("Rings_i").i; ++i)
 	{
 		double RND;
@@ -1218,10 +1144,8 @@ void galaxy::SpontaneousGas2StarFormation()
 		{
 			if(GlxCells(i)(j,gc.at("SFR_TRESH")) > 0)
 			{
-				//#pragma omp critical
-				{
-					RND=gsl_rng_uniform (random_number_gsl);
-				}
+
+				RND=gsl_rng_uniform (random_number_gsl);
 
 				if(RND < GlxCells(i)(j,gc.at("SPONT_BUFFER"))*SUM)
 				{
@@ -1231,10 +1155,6 @@ void galaxy::SpontaneousGas2StarFormation()
 					GlxRings(i,gr.at("SPONT_event"))+=1;
 					
 					GLX.at("SFR")+=MStars;
-
-					/*int idx=i/prm.at("PEG_RINGS_i").i;
-					//#pragma omp atomic
-					GLX[i2s[idx]]+=MStars;*/
 				}
 			}
 		}
@@ -1242,245 +1162,12 @@ void galaxy::SpontaneousGas2StarFormation()
 	GLX.at("SPONTANEOUS_EVENTS")=SUM0;
 }
 
-/*void galaxy::SpontaneousStarFormation()
-{
-	double SUM=0;
-	#pragma omp parallel for schedule(static) reduction(+:SUM)
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		GlxCells(i).col(gc.at("SPONT_BUFFER"))=arma::pow
-			(  GlxCells(i).col(gc.at("Mgas")),	 2);//prm.at("SPONT_MODE_i").i );
-
-		SUM+=sum( GlxCells(i).col( gc.at("SPONT_BUFFER") ) );
-	}
-	//cerr<< median( GlxCells(20).col(gc.at("SPONT_BUFFER")) ) <<" "<<SUM<<endl;
-	SUM=prm.at("SPONT_NRM_f").f/SUM;
-
-	unsigned int SUM0=0;
-    #pragma omp parallel for reduction(+:SUM0)
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		double RND;
-		//float MStars;
-		for(unsigned short j=0; j<NCells(i); ++j)
-		{
-			if(GlxCells(i)(j,gc.at("SFR_TRESH")) > 0)
-			{
-				#pragma omp critical
-				{
-					RND=gsl_rng_uniform (random_number_gsl);
-				}
-
-				if(RND < GlxCells(i)(j,gc.at("SPONT_BUFFER"))*SUM*GlxCells(i)(j,gc.at("SFR_TRESH")))
-				{
-					MStars=SF_event(i,j);
-					++SUM0;
-					GlxRings(i,gr.at("SF_event"))+=1;
-					GlxRings(i,gr.at("SPONT_event"))+=1;
-
-					//int idx=i/prm.at("PEG_RINGS_i").i;
-					//#pragma omp atomic
-					//GLX[i2s[idx]]+=MStars;
-				}
-			}
-		}
-	}
-	GLX.at("SPONTANEOUS_EVENTS")=SUM0;
-}*/
-
-/*void galaxy::SpontaneousNotFixedStarFormation()
-{
-	#pragma omp parallel for schedule(static)
-	for(int i=0; i<prm.at("Rings_i").i-prm.at("Rings_BUFF_i").i; ++i)
-	{
-		for(unsigned short j=0; j<NCells(i); ++j)
-		{
-
-			GlxCells(i)(j,gc.at("SPONT_BUFFER"))=
-			pow(GlxCells(i)(j,gc.at("Mgas"))/prm.at("CELL_AREA_f").f/prm.at("NFSPONT_GAS_NRM_f").f, prm.at("NFSPONT_GAS_MODE_f").f)*GlxCells(i)(j,gc.at("SFR_TRESH"));
-		}
-	}
-
-	unsigned int SUM0=0;
-    #pragma omp parallel for reduction(+:SUM0)
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		double RND;
-		//float MStars;
-		for(unsigned short j=0; j<NCells(i); ++j)
-		{
-			if(GlxCells(i)(j,gc.at("SFR_TRESH")) > 0)
-			{
-
-				#pragma omp critical
-				{
-					RND=gsl_rng_uniform (random_number_gsl);
-				}
-
-				if(RND < GlxCells(i)(j,gc.at("SPONT_BUFFER")))
-				{
-					MStars=SF_event(i,j);
-					++SUM0;
-					GlxRings(i,gr.at("SF_event"))+=1;
-					GlxRings(i,gr.at("SPONT_event"))+=1;
-
-					//int idx=i/prm.at("PEG_RINGS_i").i;
-					//#pragma omp atomic
-					//GLX[i2s[idx]]+=MStars;
-				}
-			}
-		}
-	}
-	GLX.at("SPONTANEOUS_EVENTS")=SUM0;
-}*/
-/*void galaxy::SpontaneousManualStarFormation()
-{
-	static int SPONT_IDX=0;
-	if(TIMESTEP >= prm.at("MANUAL_SPONT").fv(SPONT_IDX))
-	{
-		SPONT_IDX++;
-		cerr<<SPONT_IDX-1 << " " << SPONT_IDX << endl;
-		cerr<<prm.at("MANUAL_SPONT").fv(SPONT_IDX-1) << " " << prm.at("MANUAL_SPONT").fv(SPONT_IDX) << endl;
-	}
-
-	fvec CUR_SPONT;
-	if (SPONT_IDX > 0)
-	{
-		CUR_SPONT=log10(MSPONT.col(SPONT_IDX)/MSPONT.col(SPONT_IDX-1))
-			/log10(prm.at("MANUAL_SPONT").fv(SPONT_IDX)/prm.at("MANUAL_SPONT").fv(SPONT_IDX-1))
-			*log10(TIMESTEP/prm.at("MANUAL_SPONT").fv(SPONT_IDX-1))+log10(MSPONT.col(SPONT_IDX-1));
-		CUR_SPONT=exp10(CUR_SPONT);
-	}
-	else if (SPONT_IDX==0)
-		CUR_SPONT=MSPONT.col(SPONT_IDX);
-	else
-	{
-		cerr<<"What??" << endl;
-		exit(0);
-	}
-
-	unsigned int SUM0=0;
-    #pragma omp parallel for reduction(+:SUM0)
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		double RND;
-		//float MStars;
-		for(unsigned short j=0; j<NCells(i); ++j)
-		{
-			if(GlxCells(i)(j,gc.at("SFR_TRESH")) > 0)
-			{
-				#pragma omp critical
-				{
-					RND=gsl_rng_uniform (random_number_gsl);
-				}
-
-				if(RND < CUR_SPONT(i)*prm.at("MANUAL_SPONT_OFFSET_f").f*GlxCells(i)(j,gc.at("SFR_TRESH")))
-				{
-					MStars=SF_event(i,j);
-					++SUM0;
-					GlxRings(i,gr.at("SF_event"))+=1;
-					GlxRings(i,gr.at("SPONT_event"))+=1;
-
-					int idx=i/prm.at("PEG_RINGS_i").i;
-					#pragma omp atomic
-					GLX[i2s[idx]]+=MStars;
-				}
-			}
-		}
-	}
-	GLX.at("SPONTANEOUS_EVENTS")=SUM0;
-}*/
-
-/*void galaxy::SpontaneousFlatStarFormation()
-{
-	static float FLAT_NRM=1./(prm.at("Rings_i").i*(prm.at("Rings_i").i-1)*3)*prm.at("SPONT_NRM_f").f;
-	unsigned int SUM0=0;
-    #pragma omp parallel for reduction(+:SUM0)
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		double RND;
-		//float MStars;
-		for(unsigned short j=0; j<NCells(i); ++j)
-		{
-			if(GlxCells(i)(j,gc.at("SFR_TRESH")) > 0)
-			{
-				#pragma omp critical
-				{
-					RND=gsl_rng_uniform (random_number_gsl);
-				}
-
-				if(RND < FLAT_NRM)
-				{
-					MStars=SF_event(i,j);
-					++SUM0;
-					GlxRings(i,gr.at("SF_event"))+=1;
-					GlxRings(i,gr.at("SPONT_event"))+=1;
-
-					int idx=i/prm.at("PEG_RINGS_i").i;
-					#pragma omp atomic
-					GLX[i2s[idx]]+=MStars;
-				}
-			}
-		}
-	}
-	GLX.at("SPONTANEOUS_EVENTS")=SUM0;
-}*/
-
-/*void galaxy::SpontaneousRadFlatStarFormation()
-{
-	static fvec RadFlatNrm = 1./conv_to<Col<float> >::from(NCells)/prm.at("Rings_i").i*prm.at("SPONT_NRM_f").f;
-	unsigned int SUM0=0;
-    #pragma omp parallel for reduction(+:SUM0)
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		double RND;
-		//float MStars;
-		for(unsigned short j=0; j<NCells(i); ++j)
-		{
-			if(GlxCells(i)(j,gc.at("SFR_TRESH")) > 0)
-			{
-				#pragma omp critical
-				{
-					RND=gsl_rng_uniform (random_number_gsl);
-				}
-
-				if(RND < RadFlatNrm(i))
-				{
-					MStars=SF_event(i,j);
-					++SUM0;
-					GlxRings(i,gr.at("SF_event"))+=1;
-					GlxRings(i,gr.at("SPONT_event"))+=1;
-
-					//int idx=i/prm.at("PEG_RINGS_i").i;
-					#pragma omp atomic
-					GLX[i2s[idx]]+=MStars;//
-				}
-			}
-		}
-	}
-	GLX.at("SPONTANEOUS_EVENTS")=SUM0;
-}*/
-
 void galaxy::SpontaneousGeneric()
 {
 	switch(SPONT_TYPE)
 	{
-		/*case 0:
-			SpontaneousStarFormation();
-			break;
-		case 1:
-			SpontaneousNotFixedStarFormation();
-			break;
-		case 2:
-			SpontaneousFlatStarFormation();
-			break;
-		case 3:
-			SpontaneousManualStarFormation();
-			break;
-		case 4:
-			SpontaneousRadFlatStarFormation();
-			break;*/
-		case 5:
+		/* Custom types of spontaneous star formation can be added hereOther */
+		case 0:
 			SpontaneousGas2StarFormation();
 			break;
 		default:
@@ -1612,40 +1299,7 @@ double galaxy::SF_event(unsigned short i, unsigned short j)
 	}
 	return Mstars;
 }
-void galaxy::RefractoryTime()
-{
-	prm["TREF_TYPE_i"].i=0;
-	//prm["TREF_i"].i=0;
-	//prm["TREF_CDEN_f"].f=0;
-	static const float CONST_VAL = 0; //prm.at("TREF_i").i*prm.at("TREF_CDEN_f").f*prm.at("CELL_AREA_f").f;//GlxCells(i).col(gc.at("Mgas"));
-	static bool FIRST_TIME=true;
 
-	switch(prm.at("TREF_TYPE_i").i)
-	{
-		case 0:
-		// initialize only first time
-			if(FIRST_TIME)
-			{
-				#pragma omp parallel for schedule(guided)
-				for(int i=0; i<prm.at("Rings_i").i; ++i)
-				{
-					GlxCells(i).col(gc.at("REF_TIME_BUFFER")).fill( -1 );
-				}
-				FIRST_TIME=false;
-			}
-			break;
-		case 1:
-			#pragma omp parallel for schedule(guided)
-			for(int i=0; i<prm.at("Rings_i").i; ++i)
-			{
-				GlxCells(i).col(gc.at("REF_TIME_BUFFER")) = CONST_VAL/GlxCells(i).col(gc.at("Mgas"));
-			}
-			break;
-		default:
-			cerr<<"Refractory time TYPE:" << prm.at("TREF_TYPE_i").i <<" not supported" << endl;
-			exit(EXIT_FAILURE);
-	}
-}
 void galaxy::MarkActiveCells()
 {
 	static const float  INVERSE_GAS_TRESH = 1./(prm.at("GAS_SFR_TRESHOLD_f").f*prm.at("CELL_AREA_f").f);
@@ -1681,8 +1335,7 @@ void galaxy::MarkActiveCells()
 		{
 			for(int j=0; j<NCells(i); ++j)
 			{
-				if(GlxCells(i)(j,gc.at("RefTime")) > GlxCells(i)(j,gc.at("REF_TIME_BUFFER")) &&
-				  GlxCells(i)(j,gc.at("RefTime"))>prm.at("SN_Timescale_10Myr_i").i           &&
+				if(GlxCells(i)(j,gc.at("RefTime"))>prm.at("SN_Timescale_10Myr_i").i    &&
 				  GlxCells(i)(j,gc.at("Mgas")) >=  COMPARE_VAL 									)
 				{
 					GlxCells(i)(j, gc.at("SFR_TRESH"))=1;
@@ -1701,14 +1354,14 @@ void galaxy::MarkActiveCells()
 }
 void galaxy::Evolve()
 {
-	// For initialisation purposes
-	RefractoryTime();
 	SFR_INDEX=0; // sFR index is used to get longer then 10 Myr SFR profile
 	OTFL_INDEX=0;
 	TIMESTEP=0;
 	for(int t=0; t<prm.at("Galaxy_age_Myr_i").i; t+=prm.at("Time_step_Myr_i").i)
 	{		
-		rotate();
+		// rotation of the cells
+		GlxRings.col(gr.at("AziCor"))=GlxRings.col(gr.at("AziCor"))+GlxRings.col(gr.at("RotRad"));
+		// after the rotation, recalculate neighbors of the cells
 		find_neighbours();
 		
 		if (SFR_INDEX >= MAX_SFR_INDEX)
@@ -1738,12 +1391,10 @@ void galaxy::Evolve()
 		}
 		EvolveAge();
 
-		//RefractoryTime();
 		MarkActiveCells();
 
 		SpontaneousGeneric();
 
-		//AnizotropicTriggeredStarFormation();
 		IzotropicTriggeredStarFormation();
 
 		++TIMESTEP;
@@ -1763,6 +1414,11 @@ void galaxy::Evolve()
 	check_metals();
 }
 
+/*
+ *  The funtion called ant the end of simulation prints diagnostic
+ *  information about metallicity content in galaxy
+ *  
+ */
 void galaxy::check_metals()
 {
 	double CUR_METALS=0;
@@ -1780,38 +1436,12 @@ void galaxy::Output()
 {
 	if(TIMESTEP*prm.at("Time_step_Myr_i").i == prm.at("Output_Times_ia").usv(prm.at("Output_Times_ia").cur) || prm.at("OUTPUT_TYPES_n").dict.at("pegase") )
 	{
-		/*if( prm.at("PHOTOMETRY_sc").initialized )
-		{
-			GenPhotometry();
-			// calculating metallicity evolution in the rings
-			//==============================================
-			fvec ZG = zeros<fvec>(prm.at("Rings_i").i);
-			fvec MS = zeros<fvec>(prm.at("Rings_i").i);
-			#pragma omp parallel for schedule(guided)
-			for(int i=0; i<prm.at("Rings_i").i; ++i)
-			{	
-				ZG(i) = sum(GlxCells(i).col(gc.at("Mgas"))%GlxCells(i).col(gc.at("Zgas")));
-				MS(i) = accu( GlxPhot(i).col(gp.at( "M" )) );//+accu( GlxPhot(i).col(gp.at( "MWD" )) )+accu( GlxPhot(i).col(gp.at( "MBHNS" )) );
-			}
-		
-			int idx;
-			for(int i=0; i<prm.at("Rings_i").i; ++i)
-			{	
-				idx = 0;//i/prm.at("PEG_RINGS_i").i;
-				GLX[i2z[idx]] += ZG(i);
-				GLX[i2l[idx]] += MS(i);
-			}
-			ZG.clear();
-			MS.clear();
-			//=====================================================
-		}*/
 		if(prm.at("OUTPUT_TYPES_n").dict.at("pegase"))
 		{
 			GenRadialPhotometry();
 		}
 	}
 	if(TIMESTEP*prm.at("Time_step_Myr_i").i == prm.at("Output_Times_ia").usv(prm.at("Output_Times_ia").cur) && prm.at("OUTPUT_TYPES_n").dict.at("2d"))
-	//if(prm.at("OUTPUT_TYPES_n").dict.at("0d"))
 	{
 		stringstream s, sdump;
 		s<<setprecision(3);
@@ -1937,8 +1567,7 @@ void galaxy::Output()
 				s << GlxRings(i,gr.at("O_metals"))/NCells(i) << " ";
 				s << sum(ROTFL_METALS.row(i))/(prm.at("CELL_AREA_f").f*NCells(i)*prm.at("Time_step_Myr_i").i*MAX_OTFL_INDEX) << " ";
 			}
-			//s<< -2.5*log10( median( GlxPhot(i).col(gp.at("FUV" )) )/(prm.at("CELL_AREA_f").f*PC2_TO_ARCSEC2) ) <<" ";
-			//s<< -2.5*log10( median( GlxPhot(i).col(gp.at("NUV" )) )/(prm.at("CELL_AREA_f").f*PC2_TO_ARCSEC2) ) <<" ";
+			
 			if( prm.at("PHOTOMETRY_sc").initialized )
 			{
 				if( mstr != 0 )
@@ -2034,15 +1663,9 @@ void galaxy::Output()
 	//output integrated galaxy properties
 	if(prm.at("OUTPUT_TYPES_n").dict.at("0d"))
 	{
-		//cerr<<"true" <<endl;
 		if(TIMESTEP == 1)
 		{
 			igal <<"#t SP_E TR_E ACC ST_GAS_ACC OTFL STARS GAS ZGAS TSFR"<<endl;
-			/*for(int i=0; i<prm.at("PEG_RINGS_i").i; ++i)
-			{
-				igal<<" SFR"<<i<<" MGAS"<<i <<" TMGAS"<< i <<" ZGAS"<<i << " MSTR"<<i;
-			}
-			igal<<" Mgas Mstars TSFR"<<endl;*/
 		}
 		igal<< TIMESTEP*prm.at("Time_step_Myr_i").i <<" ";
 		igal<< GLX.at("SPONTANEOUS_EVENTS")<<" ";
@@ -2062,21 +1685,6 @@ void galaxy::Output()
 		igal<< Galaxy_Mgas<<" ";
 		igal<< TOTAL_METALS/Galaxy_Mgas<<" ";
 		
-		/*
-		for(int i=0; i<prm.at("PEG_RINGS_i").i; ++i)
-		{
-			TSFR+=GLX[i2s[i]];
-			igal<<" "<<GLX[i2s[i]]/(prm.at("Time_step_Myr_i").i);
-			igal<<" "<<GLX[i2m[i]]<<" "<<GLX_NRM[i2m[i]];
-			if (GLX[i2m[i]] == 0)	{
-				igal<<" \"\"";
-			}
-			else	{
-				igal<<" "<<GLX[i2z[i]]/GLX[i2m[i]];
-			}
-			
-			igal<<" "<<GLX[i2l[i]];
-		}*/
 		igal<<" "<<GLX.at("SFR")/(prm.at("Time_step_Myr_i").i*1e6)<<endl;
 		for(map<string,float>::iterator it=GLX.begin(); it!= GLX.end(); ++it)
 		{
@@ -2166,14 +1774,7 @@ void galaxy::GenRadialPhotometry()
 	GlxRadPhot.zeros();
 	#pragma omp parallel for schedule(guided)
 	for(int i=0; i<prm.at("PEG_RINGS_i").i; ++i)
-	{
-		/*for(int idx=i*10; idx<i*10+10; ++idx)
-			for(map<string,unsigned short>::iterator it=gp.begin(); it!= gp.end(); ++it)
-			{
-				GlxRadPhot(i,it->second) = sum( GlxPhot(idx).col(it->second)  );
-			}
-			*/
-		
+	{	
 		for(map<string,unsigned short>::iterator it=gp.begin(); it!= gp.end(); ++it)
 			{
 				GlxRadPhot(i,it->second) = sum( GlxPhot(i).col(it->second)  );
@@ -2276,57 +1877,6 @@ void galaxy::Debug()
 	f.close();
 }
 
-/*void galaxy::Debug()
-{
-	stringstream s;
-	s<<"#i j phi cw ni nj na nphi ncw i0 i1 n0 n1 A d"<<endl;
-	for(int i=0; i<prm["Rings_i"].i; ++i)
-	{
-		for(int j=0; j<NCells(i); ++j)
-		{
-			for(int n=2; n<GlxNeigh[i]->Num(j); ++n)
-			{
-				float iphi=(float)fmod(GlxRings(i,gr["AziCor"])+GlxRings(i,gr["CellW"])*j,datum::pi*2);
-				float hcw=GlxRings(i,gr["CellW"])/2;
-				float nphi=(float)fmod(GlxRings(GlxNeigh[i]->Rings(j,n),gr["AziCor"])+GlxRings(GlxNeigh[i]->Rings(j,n),gr["CellW"])*GlxNeigh[i]->Cells(j,n), 2*datum::pi);
-				float nhcw=GlxRings(GlxNeigh[i]->Rings(j,n),gr["CellW"])/2;
-
-				s<<i<<" "<<j<<" "<<iphi<< " "<<hcw<<" ";
-				s<<GlxNeigh[i]->Rings(j,n)<<" "<<GlxNeigh[i]->Cells(j,n)<<" "<<GlxNeigh[i]->Areas(j,n)<<" ";
-				s<<nphi<<" "<<nhcw<<" ";
-				s<<(iphi-hcw)<<" "<<(iphi+hcw)<<" "<<nphi-nhcw<<" "<<nphi+nhcw<<" ";
-				if(nphi+nhcw > iphi-hcw && nphi+nhcw < iphi+hcw && nphi-nhcw<iphi-hcw)
-				{
-					s<<((nphi+nhcw)-(iphi-hcw))/(hcw*2)<<" 1";
-				}
-				else if(nphi+nhcw > iphi+hcw && nphi-nhcw>iphi-hcw && nphi-nhcw<iphi+hcw)
-				{
-					s<<((iphi+hcw)-(nphi-nhcw))/(hcw*2)<<" 2";
-				}
-				else if(nphi-nhcw>iphi-hcw && nphi + nhcw < iphi+hcw && GlxNeigh[i]->Rings(j,n) > i)
-				{
-					s<<nhcw/hcw<<" 3";
-				}
-				else if(nphi-nhcw<iphi-hcw && nphi+hcw>iphi+hcw && GlxNeigh[i]->Rings(j,n) < i)
-				{
-					s<<1<<" 4";
-				}
-				else
-				{
-					s<<-1<<" 5";
-				}
-				s<<endl;
-			}
-		}
-	}
-	fstream f;
-	stringstream fs;
-	fs <<"full_neigh_dump_nonzero_"<<TIMESTEP<<".dat";
-	f.open(fs.str().c_str(),ios::out);
-	f<<s.str();
-	f.close();
-}*/
-
 unsigned short galaxy::assign_stellar_metallicity(float z, float mgas, int ii, int jj)
 {
 	short Rval=-1;
@@ -2401,8 +1951,6 @@ void galaxy::InitInfallScenario()
 		ACC_TIME.load(fACC_TIME);
 				
 		LCDM_ACC = ACC_TIME.col(1);
-		//GlxRings.save("dump.dat",raw_ascii);
-		//cerr<<"dumped"<<endl;
 	}
 	else
 	{
@@ -2420,13 +1968,6 @@ void galaxy::InitInfallScenario()
 	cerr << "After RADIAL_ACC_PROFILE normalization central and last value: " << GlxRings(0,gr.at("AccEf")) << " "
 	 << GlxRings((prm.at("Rings_i").i-prm.at("Rings_BUFF_i").i-1),gr.at("AccEf")) <<endl;
 
-	//calculate normalization of MGas
-	/*for(int i=0; i<prm.at("Rings_i").i-prm.at("Rings_BUFF_i").i; ++i)
-	{
-		int idx=i/prm.at("PEG_RINGS_i").i;
-		//GLX_NRM[i2m[idx]]+=NCells(i)*GlxRings(i,gr.at("AccEf"))*prm.at("Z0_HALO_MASS_f").f/6;
-		GLX_NRM[i2m[idx]]+=NCells(i)*GlxRings(i,gr.at("AccEf"))*sum(LCDM_ACC);
-	}*/
 }
 
 void galaxy::Accretion()
@@ -2441,29 +1982,11 @@ void galaxy::Accretion()
 		GlxCells(i).col(gc.at("Zgas"))=GlxCells(i).col(gc.at("Metals"))/GlxCells(i).col(gc.at("Mgas"));
 		
 		SUM+=LCDM_ACC(TIMESTEP)*GlxRings(i,gr.at("AccEf"))*NCells(i);
-		
-		/*int idx = 0;
-		//cerr << idx << endl;
-		#pragma omp critical
-		{
-			GLX[i2m[idx]] += sum(GlxCells(i).col(gc.at("Mgas")));
-		}*/
 	}
 	GLX.at("ACCRETION")=SUM;
 	TOTAL_METALS+=LCDM_ACC(TIMESTEP)*ACCRETION_METTALICITY;
 }
 
-void galaxy::Fill()
-{
-	#pragma omp parallel for schedule(guided)
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		GlxRings(i,gr.at("TMgas"))+=LCDM_ACC(TIMESTEP)*GlxRings(i,gr.at("AccEf"));
-		GlxCells(i).col(gc.at("Mgas")).fill(prm.at("CELL_AREA_f").f*100);
-		GlxCells(i).col(gc.at("Zgas")).fill(0.0001);
-	}
-
-}
 
 void galaxy::ResetVariables()
 {
