@@ -1075,7 +1075,7 @@ void galaxy::find_neighbours()
 }
 
 /*
- *  The funtion creates triggered star formation events
+ *  The funtion creates triggered star formation events in the cells
  *  
  */
 
@@ -1120,7 +1120,7 @@ void galaxy::IzotropicTriggeredStarFormation()
 }
 
 /*
- *  The funtion for the creation of spontaneous star formation events
+ *  The funtion for the creation of spontaneous star formation events in the cells
  *  
  */
  
@@ -1162,6 +1162,12 @@ void galaxy::SpontaneousGas2StarFormation()
 	GLX.at("SPONTANEOUS_EVENTS")=SUM0;
 }
 
+/*
+ *  The funtion is called from the evolve loop. It is the place for
+ *  the implementation of custom spontaneous SF funtion
+ *  
+ */
+
 void galaxy::SpontaneousGeneric()
 {
 	switch(SPONT_TYPE)
@@ -1175,6 +1181,13 @@ void galaxy::SpontaneousGeneric()
 			exit(EXIT_FAILURE);
 	};
 }
+
+/*
+ *  The funtion is called for every SF event in the cell, it creates SSP according to the SFE law defined in the parameters file
+ *  ON/OFF switch of the metal enriched outflow is also calculated here using description of
+ *  Baumgartner V., Breitschwerdt D. 2013, A&A, 557, A140
+ *  
+ */
 double galaxy::SF_event(unsigned short i, unsigned short j)
 {
 	//const double  SQRT_INVERSE_AREA_POW_1_5 = pow(prm.at("CELL_AREA_f").f,-1.5);
@@ -1300,6 +1313,12 @@ double galaxy::SF_event(unsigned short i, unsigned short j)
 	return Mstars;
 }
 
+/*
+ *  The funtion is called every time step in the evolve loop.
+ *  It marks cells which are currently capable to form stars
+ *  
+ */
+
 void galaxy::MarkActiveCells()
 {
 	static const float  INVERSE_GAS_TRESH = 1./(prm.at("GAS_SFR_TRESHOLD_f").f*prm.at("CELL_AREA_f").f);
@@ -1352,6 +1371,11 @@ void galaxy::MarkActiveCells()
 		}
 	}
 }
+
+/*
+ *  The funtion time integrates galaxy parameters
+ *  
+ */
 void galaxy::Evolve()
 {
 	SFR_INDEX=0; // sFR index is used to get longer then 10 Myr SFR profile
@@ -1432,6 +1456,10 @@ void galaxy::check_metals()
 	cerr<<"CUR_METALS:"<<CUR_METALS<< " " <<" TOTAL_METALS: "<<TOTAL_METALS << " "<<CUR_METALS/TOTAL_METALS<<endl;
 }
 
+/*
+ *  The funtion process the model's ouputs
+ *  
+ */
 void galaxy::Output()
 {
 	if(TIMESTEP*prm.at("Time_step_Myr_i").i == prm.at("Output_Times_ia").usv(prm.at("Output_Times_ia").cur) || prm.at("OUTPUT_TYPES_n").dict.at("pegase") )
@@ -1445,7 +1473,7 @@ void galaxy::Output()
 	{
 		stringstream s, sdump;
 		s<<setprecision(3);
-		s<<"#r x y ref_t sfr_t sp_buff mgas zgas mstr sfe last_mstr";
+		s<<"#r-kpc x-kpc y-kpc ref_t-tstep sfr_t sp_buff mgas-msol-pc2 zgas mstr-msol-pc2 sfe-ratio last_mstr-msol";
 		if( prm.at("OUTFLOW_b").initialized )
 		{
 			s<<" TVEL rho N0" ;
@@ -1453,7 +1481,7 @@ void galaxy::Output()
 		if( prm.at("PHOTOMETRY_sc").initialized )
 		{
 			for(map<string,unsigned short>::iterator it=gp.begin(); it!= gp.end(); ++it)
-				s<<" "<< it->first << " ";
+				s<<" "<< it->first << "-mag-arcsec2 ";
 			for(map<string,unsigned short>::iterator it=gp.begin(); it!= gp.end(); ++it)
 				s<<" ave_"<< it->first << " ";
 		}
@@ -1538,7 +1566,7 @@ void galaxy::Output()
 		stringstream s;
 		float mstr;
 		s<<setprecision(3);
-		s<<"#r mgas zgas mstr SF_events SP_events SFR SFR100 ACTIVE Tgas";
+		s<<"#r-kpc mgas-msol-pc2 zgas mstr-msol-pc2 SF_events-num SP_events-num SFR-msol-pc2-tstep SFR100-msol-pc2-10tsteps ACTIVE-num Tgas-msol-pc2";
 		if( prm.at("OUTFLOW_b").initialized )
 		{
 			s<<" Ogas_tot Ogas_cur Ometals_tot Ometals_cur";
@@ -1620,7 +1648,7 @@ void galaxy::Output()
 		int NAges = prm.at("SSP_ages_usv").usv.n_rows;
 		int Nz =  prm.at("SSP_metalls_fv").fv.n_rows;
 		cerr<<NAges <<" "<< Nz << endl;
-		f<<"#r phi logM T Z" <<endl;
+		f<<"#r-kpc phi-radians logM-msol T-myr Z" <<endl;
 		f<<setprecision(3);
 		#pragma omp parallel for  schedule(dynamic)
 		for(int i=0; i<prm.at("Rings_i").i; ++i)
@@ -1665,7 +1693,7 @@ void galaxy::Output()
 	{
 		if(TIMESTEP == 1)
 		{
-			igal <<"#t SP_E TR_E ACC ST_GAS_ACC OTFL STARS GAS ZGAS TSFR"<<endl;
+			igal <<"#t-myr SP_E-num TR_E-num ACC-msol-yr ST_GAS_ACC-msol-yr OTFL-msol-yr STARS-msol GAS-msol ZGAS TSFR-msol-yr"<<endl;
 		}
 		igal<< TIMESTEP*prm.at("Time_step_Myr_i").i <<" ";
 		igal<< GLX.at("SPONTANEOUS_EVENTS")<<" ";
@@ -1754,6 +1782,12 @@ void galaxy::Output()
 
 }
 
+/*
+ *  The funtion sums flux from all ssp present in the cells
+ *  to produce 2-D surface brightness image
+ *  
+ */
+
 void galaxy::GenPhotometry()
 {
 	#pragma omp parallel for schedule(guided)
@@ -1769,6 +1803,12 @@ void galaxy::GenPhotometry()
 	}
 }
 
+/*
+ *  The funtion sums flux from all cells in the ring to produce 1-D 
+ *  surface brightness profiles
+ *  
+ */
+
 void galaxy::GenRadialPhotometry()
 {
 	GlxRadPhot.zeros();
@@ -1782,6 +1822,12 @@ void galaxy::GenRadialPhotometry()
 	}
 }
 
+/*
+ *  The funtion averages flux between nearby cells.
+ *  Basically, the averaging occurs between nearby four cells
+ *  
+ */
+ 
 float galaxy::AveFluxBlock(int i, int j, int filter)
 {
 	float CELL2 = prm.at("Cell_size_pc_f").f*prm.at("Cell_size_pc_f").f;
@@ -1833,50 +1879,11 @@ float galaxy::AveFluxBlock(int i, int j, int filter)
 	}
 	return AveFlux/(AveFluxArea*PC2_TO_ARCSEC2);
 }
-void galaxy::Debug1()
-{
-	stringstream s;
-	s<<"#i j ni nj na"<<endl;
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		for(int j=0; j<NCells(i); ++j)
-		{
-			for(int n=0; n<GlxNeigh[i]->oN(j); ++n)
-			{
-				s<<i<<" "<<j<<" "<<GlxNeigh[i]->oR(j,n)<< " "<<GlxNeigh[i]->oC(j,n)<<" " << GlxNeigh[i]->oA(j,n) << endl;
-			}
-		}
-	}
-	fstream f;
-	stringstream fs;
-	fs <<"limited_neigh_dump_nonzero_"<<TIMESTEP<<".dat";
-	f.open(fs.str().c_str(),ios::out);
-	f<<s.str();
-	f.close();
-}
 
-void galaxy::Debug()
-{
-	stringstream s;
-	s<<"#i j ni nj na"<<endl;
-	for(int i=0; i<prm.at("Rings_i").i; ++i)
-	{
-		for(int j=0; j<NCells(i); ++j)
-		{
-			for(int n=0; n<GlxNeigh[i]->Num(j); ++n)
-			{
-				s<<i<<" "<<j<<" "<<GlxNeigh[i]->Rings(j,n)<< " "<<GlxNeigh[i]->Cells(j,n)<<" " << GlxNeigh[i]->Areas(j,n) << endl;
-			}
-		}
-	}
-	fstream f;
-	stringstream fs;
-	fs <<"full_neigh_dump_nonzero_"<<TIMESTEP<<".dat";
-	f.open(fs.str().c_str(),ios::out);
-	f<<s.str();
-	f.close();
-}
-
+/*
+ *  The funtion assigns discrete metallicity for the formed ssp
+ *  
+ */
 unsigned short galaxy::assign_stellar_metallicity(float z, float mgas, int ii, int jj)
 {
 	short Rval=-1;
@@ -1916,6 +1923,17 @@ unsigned short galaxy::assign_stellar_metallicity(float z, float mgas, int ii, i
 	return Rval;
 }
 
+
+/*
+ *  The funtion reads accretion data files:
+ *  - radial accretion efficiency;
+ *  - time variable accretion into galaxy
+ * 
+ *  Here thearray with accretion values is created and later used
+ *  in the Accretion() function each time step
+ *  
+ */
+ 
 void galaxy::InitInfallScenario()
 {
 	int NSTEPS = prm.at("Galaxy_age_Myr_i").i/prm.at("Time_step_Myr_i").i;
@@ -1970,6 +1988,11 @@ void galaxy::InitInfallScenario()
 
 }
 
+/*
+ *  The funtion reads every time step is called from the Evolve loop.
+ *  It adds accreted gas mass to the cells in the galaxy disk
+ *  
+ */
 void galaxy::Accretion()
 {		
 	double SUM=0;
@@ -1988,6 +2011,10 @@ void galaxy::Accretion()
 }
 
 
+/*
+ *  The function is called verey time to reset variables in the Evolve loop
+ *  
+ */
 void galaxy::ResetVariables()
 {
 	// Put here variables which need to be setted to zero each timestep

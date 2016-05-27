@@ -42,8 +42,6 @@ class galaxy
 	void EvolveAge();
 	void ResetVariables();
 	void Output();
-	void Debug();
-	void Debug1();
 	void check_metals();
 	void Read_params(std::string fname);
 	void flush_all_dict(std::string fname);
