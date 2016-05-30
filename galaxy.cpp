@@ -1991,7 +1991,6 @@ void galaxy::InitInfallScenario()
 /*
  *  The funtion reads every time step is called from the Evolve loop.
  *  It adds accreted gas mass to the cells in the galaxy disk
- *  
  */
 void galaxy::Accretion()
 {		
