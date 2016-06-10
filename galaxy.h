@@ -32,14 +32,9 @@ class galaxy
 	~galaxy();
 
 
-	//void AnizotropicTriggeredStarFormation();
+
 	void IzotropicTriggeredStarFormation();
-	//void SpontaneousStarFormation();
 	void SpontaneousGas2StarFormation();
-	//void SpontaneousManualStarFormation();
-	//void SpontaneousNotFixedStarFormation();
-	//void SpontaneousFlatStarFormation();
-	//void SpontaneousRadFlatStarFormation();
 	void SpontaneousGeneric();
 	void MarkActiveCells();
 	void Evolve();
@@ -47,8 +42,6 @@ class galaxy
 	void EvolveAge();
 	void ResetVariables();
 	void Output();
-	void Debug();
-	void Debug1();
 	void check_metals();
 	void Read_params(std::string fname);
 	void flush_all_dict(std::string fname);
@@ -59,13 +52,10 @@ class galaxy
 	private:
 	void read_rotation_curve();
 	void find_neighbours();
-	void rotate();
-	void Fill();
 	void gas_diffusion();
 	void stars_diffusion();
 	unsigned short assign_stellar_metallicity(float z, float mgas, int i, int j);
 	double SF_event(unsigned short i, unsigned short j);
-	void RefractoryTime();
 	void InitInfallScenario();
 	void Accretion();
 	void GenPhotometry();
@@ -80,15 +70,14 @@ class galaxy
 	field<fcube> GlxStars;		//variable holding SSP popualtions of galaxy
 	field<fcube> GlxStarsBuff;	//variable holding SSP popualtions of galaxy
 	fmat StarsFlowSpeed;		//rate of stellar aging in non-linear SSP grid
-	//mat AgeFlow;				//temporary matrix for SSP ageing
+	
 	class neighbours** GlxNeigh;
 	fmat MGAS_PEGASE;			// python produced pegase matrix
 	fmat ZGAS_PEGASE;			// python produced pegase matrix
 	fmat RSFH;                  // to store radial SFH for later producing averaged SFR profiles
 	fmat ROTFL_GAS;             // to store radial outflow of gas
 	fmat ROTFL_METALS;          // to store radial outflow of metals
-	//field< Cube<unsigned short> > UpGlxNeigh;   //coordinates of neighbours
-	//field< Cube<unsigned short> > LoGlxNeigh;   //coordinates of neighbours
+	
 	std::map<std::string,parameter> prm; // model parameters
 	std::map<std::string,unsigned short> gr; // map of GlxRings columns and parameter name
 	std::map<std::string,unsigned short> gc; // map of GlxRings columns and parameter name
@@ -101,10 +90,6 @@ class galaxy
 	std::string iname;				    //parameter file name
 	std::map<std::string,float> GLX;	//integrated galaxy parameters
 	std::map<std::string,float> GLX_NRM;//normalisation of galaxy parameters
-	std::map<int,std::string> i2s;
-	std::map<int,std::string> i2m;
-	std::map<int,std::string> i2z;
-	std::map<int,std::string> i2l;
 
 	std::map<std::string,fmat> PHOT_PEGASE;
 	field<fmat> GlxPhot;
