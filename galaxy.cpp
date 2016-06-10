@@ -288,7 +288,7 @@ void galaxy::flush_all_dict(string fname)
   log.close();
 }
 
-void galaxy::Read_params(string fname)
+0void galaxy::Read_params(string fname)
 {
 	fstream fin;
 	fin.open(fname.c_str(),ios::in);
