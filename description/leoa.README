@@ -47,7 +47,7 @@ GAS_DIFFUSION 50
 #         stellar_diff {FLOAT} - dalis ląstelėje esančių žvaigždžių, kurios pereina į kaimynines ląsteles
 #            neigiamas skaičius išjungia apsikeitimą žvaigždėmis
 #         mass_treshold [Msol]: {FLOAT}
-STELLAR_DIFFUSION 0.03 1
+STELLAR_DIFFUSION -0.03 1
 #============================================================
 #SFE variables
 # SFE= epsilon*(Sigma_gas/NRM_SFE)^alpha
@@ -123,8 +123,8 @@ ACCRETION acc_rad.dat test_acc_dat.0
 # pegase - išvedama kiekvieno žiedo istorija, naudota pakyginimui su 1d modeliais
 #
 # N_TIME - išvedimų skaičius
-# TIME1, TIME2 - amžiai ties kuriais išvedami failai (1300 == 13 Gyr)
-OUTPUT 3 0d 1d 2d 6 1200 1220 1240 1260 1280 1300
+# TIME1, TIME2 - amžiai ties kuriais išvedami failai (13000 == 13 Gyr)
+OUTPUT 4 0d 1d 2d cmd 2 12000 13000
 #============================================================
 #Computational parameters
 #------------------------------------------------------------
