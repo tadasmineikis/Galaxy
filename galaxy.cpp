@@ -449,7 +449,6 @@ void galaxy::Read_params(string fname)
 					for(int i=0; i<prm.at("Output_Times_ia").an; ++i)
 					{
 						fin >>tin;
-						cerr << tin << endl;
 						t.push_back(tin);
 					}
 					prm["Output_Times_ia"].usv = Col<unsigned short>(t);
