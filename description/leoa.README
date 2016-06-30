@@ -1,0 +1,167 @@
+#TIME_VARIABLES
+#------------------------------------------------------------
+# TIMESTEP timestep
+#         timestep [Myr] : {INT} laiko žingsnis, Myr
+TIMESTEP 5
+#------------------------------------------------------------
+# GALAXY_AGE galaxy_age
+#         galaxy_age [Myr]: {INT} modeliavimo trukmė, Myr
+GALAXY_AGE 13000
+#------------------------------------------------------------
+# SN_TIMESCALE sn_timescale
+#         sn_timescale [Myr]: {INT}
+#         laiko periodas po žvaigždėdaros žybsnio,
+#         kurio metu ląstelėje negali vykti žvaigždėdara;
+#         šiuo periodu ląstelės dujų tankis ~ 0
+SN_TIMESCALE 40
+#------------------------------------------------------------
+# SEED seed
+#      seed : {INT} atsitiktinių skaičių generatoriaus "seed"
+SEED 35679456
+#------------------------------------------------------------
+# DISTANCE distance
+#         distance [Mpc] : {FLOAT} atstumas iki galaktikos
+#            naudojamas tik paviršinio šviesio mag/arcsec^2 skaičiavimui
+DISTANCE 0.8
+#============================================================
+#Geometrical variables
+#------------------------------------------------------------
+# GRID_SIZE grid_size grid_buffer
+#         grid_size : {INT} tinklelio žiedų skaičius
+#         grid_buffer : {INT} žiedų skaičius nuo pakraščio, kurie nerodomi išvedimo failuose
+GRID_SIZE 50 0
+#------------------------------------------------------------
+# CELL_SIZE cell_size
+#         cell_size [pc] : {INT} ląstelės dydis, pc
+CELL_SIZE 50
+#============================================================
+#DIFFUSION VARIABLES
+#------------------------------------------------------------
+# GAS_DIFFUSION gas_diff
+#         gas_diff [Myr] : {FLOAT} ląstelės užsipildymo dujomis laiko skalė, Myr
+#           neigiamas skaičius išjungia apsikeitimą dujomis
+GAS_DIFFUSION 50
+#------------------------------------------------------------
+# Žvaigždžių dispersija
+# STELLAR_DIFFUSION stell_diff mass_treshold
+#         stellar_diff {FLOAT} - dalis ląstelėje esančių žvaigždžių, kurios pereina į kaimynines ląsteles
+#            neigiamas skaičius išjungia apsikeitimą žvaigždėmis
+#         mass_treshold [Msol]: {FLOAT}
+STELLAR_DIFFUSION 0.03 1
+#============================================================
+#SFE variables
+# SFE= epsilon*(Sigma_gas/NRM_SFE)^alpha
+#------------------------------------------------------------
+# SFE sfe 
+#     sfe : {FLOAT} žvaigždėdaros efektyvumo parametras epsilon, 0.02==2%
+SFE 0.02
+#------------------------------------------------------------
+# SFE_POW sfe_pow
+#         sfe_pow : {float} žvaigždėdaros efektyvumo parametras alpha
+SFE_POW 2
+#------------------------------------------------------------
+# TRIGGERED trig trig_time
+#         trig : {FLOAT} indukuotos žvaigždėdaros tikimybė P_T
+#         trig_time : {INT} uždelsimas tarp žvaigždėdaros žybsnio ir indukavimo
+TRIGGERED 0.3 2
+#------------------------------------------------------------
+# NRM_SFE nrm_sfe
+#         nrm_sfe [Msol/pc^2] : {FLOAT} sunormuoja SFE dėsnį,
+#            t.y. NRM_SFE=10 reiškia, kad ties 10 Msol/pc^2 dujų paviršiniu tankiu SFE=epsilon
+NRM_SFE  10
+#------------------------------------------------------------
+# MINIMUM_SFE minimum_sfe
+#         minimum_sfe : {FLOAT} jei SFE < MINIMUM_SFE, tai SFE=MINIMUM_SFE 0.0005 == 0.05 %
+MINIMUM_SFE 0.0005
+#------------------------------------------------------------
+# MAXIMUM_SFE maximum_sfe
+#         maximu_sfe : {FLOAT} jei SFE > MAXIMUM_SFE, tai SFE=MAXIMUM_SFE, 0.5 == 50 %
+MAXIMUM_SFE 0.5
+#------------------------------------------------------------
+# TRIGG_MASS minimum_mass trigg_mass
+#         minimum_mass [Msol] : {FLOAT} minimali susiformavusi SSP masė, jei mažesnė - žybsnis nevyksta
+#         trigg_mass  [Msol] : {FLOAT} jei po žvaigždėdaros žybsnio susiformavusi populiacijos
+#                  masė mažesnė nei TRIG_MASS, tokia populiacija ne indukuoja kaimynių
+TRIGG_MASS 100 100
+#------------------------------------------------------------
+# GAS2_SPONT gas2_spont
+#         gas2_spont : {FLOAT} spontaninės žvaigždėdaros regionai susiformavę per laiko žingsnį
+#               su didesne tikimybe ląstelėse turinčiose didesnį dujų kiekį
+GAS2_SPONT 5
+#------------------------------------------------------------
+# GAS_SFR_TRESHOLD gas_sfr_treshold
+#         gas_sfr_treshold [Msol/pc^2] : {FLOAT} kritinis dujų tankis Msol/pc^2
+#                     jei dujų tankis ląstelėje mažesnis už kritinį, žvaigždėdara
+#                     ląstelėje slopinama
+GAS_SFR_TRESHOLD 5
+#============================================================
+# OUTFLOW eta critical_velocity
+#         eta : {FLOAT} parametras eta, dalis prarandamų praturtintų dujų
+#         critical_velocity : {FLOAT} superburbulo energija reikalinga praturtintų dujų praradimui
+#            atžvilgiu Baumgartner & Breitschwerdt , 1==Baumgartner & Breitschwerdt
+OUTFLOW 0.9 0.001
+#============================================================
+#Galaxy formation variables
+#------------------------------------------------------------
+# ACC_METALLICITY acc_metallicity
+#         acc_metalicity : {FLOAT} dujų akrecijos metalingumas
+ACC_METALLICITY 0.00015
+# ACRETION acc_rad_file acc_time_file
+#         acc_rad_file   : {STRING} failo vardas su radialiniu akrecijos profiliu
+#         acc_time_file  : {STRING} failo vardas su akrecijos laikinės evoliucijos failu
+ACCRETION acc_rad.dat test_acc_dat.0
+#============================================================
+#Output variables
+#------------------------------------------------------------
+# OUTPUT N_TYPE TYPE1 TYPE2 N_TIME TIME1 TIME2...
+# N_TYPE - skirtingų išvedimo tipų kiekis
+# TYPE1, TYPE2 - išvedimų tipai
+# 0d - visos galaktikos suintegruoti parametrai
+# 1d - galaktikos radialiniai parametrai
+# 2d - galaktikos disko ląstelių parametrai
+# cmd - žvaigždžių populiacijų failo išvedimas cmd generavimui
+# pegase - išvedama kiekvieno žiedo istorija, naudota pakyginimui su 1d modeliais
+#
+# N_TIME - išvedimų skaičius
+# TIME1, TIME2 - amžiai ties kuriais išvedami failai (1300 == 13 Gyr)
+OUTPUT 3 0d 1d 2d 6 1200 1220 1240 1260 1280 1300
+#============================================================
+#Computational parameters
+#------------------------------------------------------------
+# naudojamų branduolių skaičius
+# NUM_OF_THREADS num_of_threads
+#         num_of_threads : {INT} naudojamų branduolių skaičius
+NUM_OF_THREADS 8
+#------------------------------------------------------------
+# CMD_LIMIT mass_limit age_limit
+#         mass_limit [Msol] : {FLOAT} mažiausia išvedama SSP masė
+#         age_limit  [Myr] : {FLOAT} maksimalus išvedamos populiacijos amžius
+CMD_LIMIT 1 14000
+#------------------------------------------------------------
+# ROTATION rotation_curve_file
+#         rotation_curve_file : {STRING} failo vardas su sukimosi kreive
+ROTATION rotcurv.dat
+#============================================================
+# SSP parametrai
+#------------------------------------------------------------
+# SSP ages zlist
+#         ages : {STRING} SSP populiacijų amžiai
+#         zlist: {STRING} SSP populiacijų metalingumai
+SSP params_a27_z10_a2600/ages2600 params_a27_z10_a2600/zlist10
+#------------------------------------------------------------
+# PEGASE mgas_file zgas_file
+#         mgas_file : {STRING} SSP populiacijų dujų grąžinamų į ISM evoliucija
+#         zgas_file : {STRING} SSP populiacijų metalų grąžinimo (Z*Mgas) į ISM evoliucija
+PEGASE params_a27_z10_a2600/MGAS_z10_a2600.PEGASE params_a27_z10_a2600/ZGAS_z10_a2600.PEGASE
+#------------------------------------------------------------
+# PHOTOMETRY num_of_filters
+# filter_file filter_name
+# ...         ...
+#         num_of_filters : {INT} žymi kiek skirtingų fotometrinių juostų bus išvedimo failuose
+#             po nuorodos į failą pvz. params_a27_z10_a1300/FUV_z10_a1300 "FUV" -- reiškia,
+#             kad išvedimo failuose stulpelis vadinsis "FUV"
+#         filter_file : {STRING} failas kuriame surašyta SSP šviesio evoliucija tam tikroje
+#             fotometrinėje juostoje
+#         filter_name : {STRING} fotometrinės juostos pavadinimas, naudojams išvedimo failuose
+PHOTOMETRY 0
+params_a27_z10_a2600/M_z10_a2600 FUV
