@@ -1,0 +1,59 @@
+#============================================
+iso 40
+iso_bank/icz0001.dat
+iso_bank/icz0002.dat
+iso_bank/icz0003.dat
+iso_bank/icz0004.dat
+iso_bank/icz0005.dat
+iso_bank/icz0006.dat
+iso_bank/icz0007.dat
+iso_bank/icz0008.dat
+iso_bank/icz0009.dat
+iso_bank/icz0010.dat
+iso_bank/icz0011.dat
+iso_bank/icz0012.dat
+iso_bank/icz0013.dat
+iso_bank/icz0014.dat
+iso_bank/icz0015.dat
+iso_bank/icz0016.dat
+iso_bank/icz0017.dat
+iso_bank/icz0018.dat
+iso_bank/icz0019.dat
+iso_bank/icz0020.dat
+iso_bank/icz0021.dat
+iso_bank/icz0022.dat
+iso_bank/icz0023.dat
+iso_bank/icz0024.dat
+iso_bank/icz0025.dat
+iso_bank/icz0026.dat
+iso_bank/icz0027.dat
+iso_bank/icz0028.dat
+iso_bank/icz0029.dat
+iso_bank/icz0030.dat
+iso_bank/icz0031.dat
+iso_bank/icz0032.dat
+iso_bank/icz0033.dat
+iso_bank/icz0034.dat
+iso_bank/icz0035.dat
+iso_bank/icz0036.dat
+iso_bank/icz0037.dat
+iso_bank/icz0038.dat
+iso_bank/icz0039.dat
+iso_bank/icz0040.dat
+#********************************************
+imf stochastic 0 4 3
+0.01 0.08 -0.3
+0.08 0.5 -1.3
+0.5 1.0 -2.3
+1.0 120 -2.7
+#********************************************
+SEED
+BINARY_FRACTION 0.
+#============================================
+limit 4 4
+#********************************************
+threads 1
+GALEMO_RESULTS
+#
+OUT
+#********************************************

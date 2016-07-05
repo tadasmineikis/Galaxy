@@ -6,11 +6,11 @@ DEBUG = -g3 -ggdb3
 OPTIM = -O2  -march=native
 OBJS  = main.o galaxy.o util.o neighbours.o
 EXE = galaxy_2.0
-RUN_DIR = /home/tadas/RUN_leoA/
+RUN_DIR =
 INCLUDE = 
 LIB     = -larmadillo -lgsl -lgslcblas -lgomp
 
-all: galemo move
+all: galemo
 
 galemo: $(OBJS)
 	$(CC) $(LFLAGS) $(OBJS) -o $(EXE) $(LIB)
@@ -37,8 +37,3 @@ zip:
 	gzip -f $(EXE).tar
 
 arch: tar zip
-
-move: | galemo
-	ln -sf  $(CURDIR)/$(EXE) $(RUN_DIR)$(EXE)
-
-
