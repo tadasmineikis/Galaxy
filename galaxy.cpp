@@ -1568,7 +1568,7 @@ void galaxy::Output()
 		s<<"#r-kpc mgas-msol-pc2 zgas mstr-msol-pc2 SF_events-num SP_events-num SFR-msol-pc2-tstep SFR100-msol-pc2-10tsteps ACTIVE-num Tgas-msol-pc2";
 		if( prm.at("OUTFLOW_b").initialized )
 		{
-			s<<" Ogas_tot Ogas_cur Ometals_tot Ometals_cur";
+			s<<" Ogas_tot-msol Ogas_cur-msol-pc2-10tsteps Ometals_tot-msol Ometals_cur-msol-pc2-10tsteps";
 		}
 		if( prm.at("PHOTOMETRY_sc").initialized )
 			for(map<string,unsigned short>::iterator it=gp.begin(); it!= gp.end(); ++it)
