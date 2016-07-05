@@ -1,0 +1,145 @@
+#!/bin/sh
+
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+# check if git is installed
+git --version 2>&1 >/dev/null
+GIT_IS_AVAILABLE=$?
+if [ $GIT_IS_AVAILABLE -ne 0 ]; 
+then echo "${RED}Git was not found, please install before continuing.${NC}";
+     exit; 
+else
+     echo "${GREEN}Git was found on the system${NC}"
+fi
+
+# check for libraries. These are identical for both packages
+ldconfig -p | grep -q libarmadillo
+ARMADILLO=$?
+ldconfig -p | grep -q libgsl
+GSL=$?
+ldconfig -p | grep -q libgslcblas
+GSLCBLAS=$?
+ldconfig -p | grep -q libgomp
+GOMP=$?
+
+if [ $ARMADILLO -ne 0 ] || [ $GSL -ne 0 ] || [ $GSLCBLAS -ne 0 ] || [ $GOMP -ne 0 ]
+then
+	if [ $ARMADILLO -ne 0 ]
+		then echo "${RED}Missing armadillo library${NC}";
+	fi
+
+	if [ $GSL -ne 0 ]
+		then echo "${RED}Missing libgsl${NC}";
+	fi
+
+	if [ $GSLCBLAS -ne 0 ]
+		then echo "${RED}Missing libgslcblas${NC}";
+	fi
+
+	if [ $GOMP -ne 0 ]
+		then echo "${RED}Missing libgomp${NC}";
+	fi
+exit
+fi
+
+# check if Galaxy repository is already present
+if [ -d "Galaxy" ]
+	then
+		# if yes, update it
+		cd Galaxy
+		git fetch origin
+		git reset --hard origin/master
+		cd ..
+	else
+		# if no, create it
+		git clone https://github.com/tadasmineikis/Galaxy.git
+fi
+
+cd Galaxy
+make 2>&1 >/dev/null
+
+if [ $? -ne 0 ]; 
+then echo "${RED}error in compilation Galaxy package! Aborting.${NC}";
+     exit; 
+else
+     echo "${GREEN}Compilation of Galaxy package completed successfully${NC}"
+fi
+
+cd ..
+
+# check if Galaxy repository is already present
+if [ -d "GCMD" ]
+	then
+		# if yes, update it
+		cd GCMD
+		git fetch origin
+		git reset --hard origin/master
+		cd ..
+	else
+		# if no, create it
+		git clone https://github.com/tadasmineikis/GCMD.git
+fi
+
+cd GCMD
+
+make 2>&1 >/dev/null
+if [ $? -ne 0 ]; 
+then echo "${RED}error in compilation GCMD package! Aborting.${NC}";
+     exit; 
+else
+     echo "${GREEN}Compilation of GCMD package completed successfully${NC}"
+fi
+
+cd ..
+
+if [ -d "GalaxyPipeline" ]
+	then
+		# if yes, update it
+		cd GalaxyPipeline
+		git fetch origin
+		git reset --hard origin/master
+		cd ..
+	else
+		# if no, create it
+		git clone https://github.com/tadasmineikis/GalaxyPipeline.git
+fi
+
+# create RUN environment
+
+if [ -d "RUN_leoA" ]
+	then
+		ln -sf $PWD/GalaxyPipeline/galemo.py $PWD/RUN_leoA/galemo
+		ln -sf $PWD/Galaxy/galaxy_2.0 $PWD/RUN_leoA/galaxy_2.0
+		ln -sf $PWD/GCMD/gCMD_0.21.5 $PWD/RUN_leoA/gCMD_0.21.5
+	else
+		mkdir RUN_leoA
+		ln -sf $PWD/GalaxyPipeline/galemo.py $PWD/RUN_leoA/galemo
+		ln -sf $PWD/Galaxy/galaxy_2.0 $PWD/RUN_leoA/galaxy_2.0
+		ln -sf $PWD/GCMD/gCMD_0.21.5 $PWD/RUN_leoA/gCMD_0.21.5
+		# create example files
+		cp -a $PWD/Galaxy/examples/leoA/. $PWD/RUN_leoA/
+
+
+fi
+
+if [ -d "RUN_m33" ]
+	then
+		ln -sf $PWD/GalaxyPipeline/galemo.py $PWD/RUN_m33/galemo
+		ln -sf $PWD/Galaxy/galaxy_2.0 $PWD/RUN_m33/galaxy_2.0
+		ln -sf $PWD/GCMD/gCMD_0.21.5 $PWD/RUN_m33/gCMD_0.21.5
+	else
+		mkdir RUN_m33
+		ln -sf $PWD/GalaxyPipeline/galemo.py $PWD/RUN_m33/galemo
+		ln -sf $PWD/Galaxy/galaxy_2.0 $PWD/RUN_m33/galaxy_2.0
+		ln -sf $PWD/GCMD/gCMD_0.21.5 $PWD/RUN_m33/gCMD_0.21.5
+		# create example files
+		cp -a $PWD/Galaxy/examples/m33/. $PWD/RUN_m33/
+
+fi
+
+echo "download and unpack isochrones in corresponging directories iso_bank"
+echo "m33 https://drive.google.com/open?id=0Bwr33zLJzGQORE9uVU5iU3RkMEk"
+echo "leoA https://drive.google.com/open?id=0Bwr33zLJzGQObDl5dnJvVjJVQTA"
