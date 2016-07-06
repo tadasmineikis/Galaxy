@@ -69,7 +69,6 @@ if [ -d "Galaxy" ]
 fi
 
 cd Galaxy
-make clean
 make 2>&1 >/dev/null
 
 if [ $? -ne 0 ]; 
@@ -95,7 +94,6 @@ if [ -d "GCMD" ]
 fi
 
 cd GCMD
-make clean
 make 2>&1 >/dev/null
 if [ $? -ne 0 ]; 
 then echo "${RED}error in compilation GCMD package! Aborting.${NC}";
@@ -152,5 +150,5 @@ if [ -d "RUN_m33" ]
 fi
 
 echo "download and unpack isochrones in corresponging directories iso_bank"
-echo "m33 https://drive.google.com/open?id=0Bwr33zLJzGQORE9uVU5iU3RkMEk"
-echo "leoA https://drive.google.com/open?id=0Bwr33zLJzGQObDl5dnJvVjJVQTA"
+echo "{GREEN}m33 https://drive.google.com/open?id=0Bwr33zLJzGQORE9uVU5iU3RkMEk{NC}"
+echo "{GREEN}leoA https://drive.google.com/open?id=0Bwr33zLJzGQObDl5dnJvVjJVQTA{NC}"
