@@ -1,4 +1,4 @@
-CC    = g++
+CC    ?= g++
 CURENT = $(OPTIM)
 CFLAGS= -c -Wall $(INCLUDE) $(CURENT) -fopenmp
 LFLAGS= -Wall $(CURENT) 
