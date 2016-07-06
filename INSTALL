@@ -15,34 +15,44 @@ else
      echo "${GREEN}Git was found on the system${NC}"
 fi
 
-# check for libraries. These are identical for both packages
-ldconfig -p | grep -q libarmadillo
-ARMADILLO=$?
-ldconfig -p | grep -q libgsl
-GSL=$?
-ldconfig -p | grep -q libgslcblas
-GSLCBLAS=$?
-ldconfig -p | grep -q libgomp
-GOMP=$?
+#    check if ldconfig is working
+#--------------------------------
+ldconfig -V 2>&1 >/dev/null
 
-if [ $ARMADILLO -ne 0 ] || [ $GSL -ne 0 ] || [ $GSLCBLAS -ne 0 ] || [ $GOMP -ne 0 ]
-then
-	if [ $ARMADILLO -ne 0 ]
-		then echo "${RED}Missing armadillo library${NC}";
-	fi
+if [ $? -ne 0 ]; 
+then echo "${RED} ldconfig is not present, aborting library check.${NC}";
+     exit; 
+else
+     echo "${GREEN} Checking if necessary libraries are present ${NC}"
+     ldconfig -p | grep -q libarmadillo
+     ARMADILLO=$?
+     ldconfig -p | grep -q libgsl
+     GSL=$?
+     ldconfig -p | grep -q libgslcblas
+     GSLCBLAS=$?
+     ldconfig -p | grep -q libgomp
+     GOMP=$?
 
-	if [ $GSL -ne 0 ]
-		then echo "${RED}Missing libgsl${NC}";
-	fi
+     if [ $ARMADILLO -ne 0 ] || [ $GSL -ne 0 ] || [ $GSLCBLAS -ne 0 ] || [ $GOMP -ne 0 ]
+	then
+		if [ $ARMADILLO -ne 0 ]
+			then echo "${RED}Missing armadillo library${NC}";
+		fi
 
-	if [ $GSLCBLAS -ne 0 ]
-		then echo "${RED}Missing libgslcblas${NC}";
-	fi
+		if [ $GSL -ne 0 ]
+			then echo "${RED}Missing libgsl${NC}";
+		fi
 
-	if [ $GOMP -ne 0 ]
-		then echo "${RED}Missing libgomp${NC}";
-	fi
-exit
+		if [ $GSLCBLAS -ne 0 ]
+			then echo "${RED}Missing libgslcblas${NC}";
+		fi
+	
+		if [ $GOMP -ne 0 ]
+			then echo "${RED}Missing libgomp${NC}";
+		fi
+	exit
+     fi
+
 fi
 
 # check if Galaxy repository is already present
