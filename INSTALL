@@ -51,6 +51,7 @@ else
 		fi
 	exit
      fi
+     echo "${GREEN} All OK! ${NC}"
 
 fi
 
@@ -149,5 +150,5 @@ if [ -d "RUN_m33" ]
 fi
 
 echo "download and unpack isochrones in corresponging directories iso_bank"
-echo "{GREEN}m33 https://drive.google.com/open?id=0Bwr33zLJzGQORE9uVU5iU3RkMEk{NC}"
-echo "{GREEN}leoA https://drive.google.com/open?id=0Bwr33zLJzGQObDl5dnJvVjJVQTA{NC}"
+echo "${GREEN}m33 https://drive.google.com/open?id=0Bwr33zLJzGQORE9uVU5iU3RkMEk${NC}"
+echo "${GREEN}leoA https://drive.google.com/open?id=0Bwr33zLJzGQObDl5dnJvVjJVQTA${NC}"
