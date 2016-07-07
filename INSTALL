@@ -21,7 +21,6 @@ ldconfig -V 2>&1 >/dev/null
 
 if [ $? -ne 0 ]; 
 then echo "${RED} ldconfig is not present, aborting library check.${NC}";
-     exit; 
 else
      echo "${GREEN}Checking if necessary libraries are present ${NC}"
      ldconfig -p | grep -q libarmadillo
