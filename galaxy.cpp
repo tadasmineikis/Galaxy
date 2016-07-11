@@ -1266,7 +1266,7 @@ double galaxy::SF_event(unsigned short i, unsigned short j)
 		}
 		else if (N_SN >= 500)
 		{
-			GlxCells(i)(j,gc.at("TVEL"))=9999;
+			GlxCells(i)(j,gc.at("TVEL"))=9.99;
 		}
 		else
 		{
@@ -1291,7 +1291,7 @@ double galaxy::SF_event(unsigned short i, unsigned short j)
 	}
 	else if (prm.at("OUTFLOW_VEL_RATIO_f").f < 0)
 	{
-		GlxCells(i)(j,gc.at("TVEL"))=-99.99;
+		GlxCells(i)(j,gc.at("TVEL"))=-19.99;
 	}
 
 	//GlxCells(i)(j,gc.at("TVEL"))=pow(L_0/(Rho_0*H0*H0),1./3.)*0.7*0.001; // km/s
