@@ -525,10 +525,10 @@ void galaxy::Read_params(string fname)
 			}
 			//==========================================================
 			// SPONTANEOUS SF PARAMETERS
-			else if(in_str==string("GAS2_SPONT"))
+			else if(in_str==string("SPONT"))
 			{
 				SPONT_TYPE=0;
-				fin >> prm["GAS2_SPONT_NRM_f"].f ;
+				fin >> prm["SPONT_NRM_f"].f >> prm["SPONT_POW_f"].f;
 			}
 			else if(in_str==string("COUNT_ACTIVE"))
 			{
@@ -1129,10 +1129,10 @@ void galaxy::SpontaneousGas2StarFormation()
 	#pragma omp parallel for schedule(static) reduction(+:SUM)
 	for(int i=0; i<prm.at("Rings_i").i; ++i)
 	{
-		GlxCells(i).col(gc.at("SPONT_BUFFER"))=GlxCells(i).col(gc.at("Mgas"))%GlxCells(i).col(gc.at("Mgas"));
+		GlxCells(i).col(gc.at("SPONT_BUFFER"))=pow(GlxCells(i).col(gc.at("Mgas")),prm.at("SPONT_POW_f").f);
 		SUM+=sum( GlxCells(i).col( gc.at("SPONT_BUFFER") ) );
 	}
-	SUM=prm.at("GAS2_SPONT_NRM_f").f/SUM;
+	SUM=prm.at("SPONT_NRM_f").f/SUM;
 
 	unsigned int SUM0=0;
 	for(int i=0; i<prm.at("Rings_i").i; ++i)

@@ -84,10 +84,12 @@ MAXIMUM_SFE 0.5
 #                  masė mažesnė nei TRIG_MASS, tokia populiacija ne indukuoja kaimynių
 TRIGG_MASS 100 100
 #------------------------------------------------------------
-# GAS2_SPONT gas2_spont
-#         gas2_spont : {FLOAT} spontaninės žvaigždėdaros regionai susiformavę per laiko žingsnį
-#               su didesne tikimybe ląstelėse turinčiose didesnį dujų kiekį
-GAS2_SPONT 1
+# SPONT num_of_events gas_pow
+#         num_of_events : {FLOAT} spontaninės žvaigždėdaros įvykių skaičius
+#	  gas_pow       : {FLOAT} spontaninės žvaigždėdaros įvykio tikimybė proporcinga
+#         dujų paviršiniam tankiui. gas_pow užduoda šios priklausomybės laipsninį rodiklį,
+#         pvz.: 0 - nepriklauso, 1 - tiesiškai, 2 - kvadratinė priklausomybė 
+SPONT 1 2
 #------------------------------------------------------------
 # GAS_SFR_TRESHOLD gas_sfr_treshold
 #         gas_sfr_treshold [Msol/pc^2] : {FLOAT} kritinis dujų tankis Msol/pc^2
