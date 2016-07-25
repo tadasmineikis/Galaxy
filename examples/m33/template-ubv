@@ -76,6 +76,7 @@ BINARY_FRACTION 0.
 #J	7	
 #H	8	
 #K	9
+# filter filter_value
 limit 4 4
 #********************************************
 threads 1

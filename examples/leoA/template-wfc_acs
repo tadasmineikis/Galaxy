@@ -75,7 +75,8 @@ BINARY_FRACTION 0.
 #F625W	6
 #F775W	7
 #F814W 	8
-limit 5 -2
+# filter filter_value
+limit 8 4
 #********************************************
 threads 1
 GALEMO_RESULTS
