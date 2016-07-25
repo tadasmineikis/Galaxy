@@ -77,7 +77,7 @@ BINARY_FRACTION 0.
 #H	8	
 #K	9
 # filter filter_value
-limit 4 4
+limit 4 -2
 #********************************************
 threads 1
 GALEMO_RESULTS
