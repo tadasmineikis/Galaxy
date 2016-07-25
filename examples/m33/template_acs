@@ -66,7 +66,16 @@ imf stochastic 0 4 3
 SEED
 BINARY_FRACTION 0.
 #============================================
-limit 4 4
+#M_ini	0
+#M_act	1
+#F435W	2
+#F475W	3
+#F555W	4
+#F606W	5
+#F625W	6
+#F775W	7
+#F814W 	8
+limit 5 -2
 #********************************************
 threads 1
 GALEMO_RESULTS
